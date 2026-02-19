@@ -1,3 +1,122 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+    :root {
+        /* Backgrounds */
+        --background: 24 13% 5%;
+        /* #0f0d0b */
+        --foreground: 38 50% 90%;
+        /* #f5ead8 */
+
+        /* Card & Popovers (Surface) */
+        --card: 24 16% 9%;
+        /* #1a1713 */
+        --card-foreground: 38 50% 90%;
+        /* #f5ead8 */
+        --popover: 24 16% 9%;
+        --popover-foreground: 38 50% 90%;
+
+        /* Primary Actions (Amber) */
+        --primary: 38 79% 56%;
+        /* #e8a838 */
+        --primary-foreground: 43 100% 5%;
+        /* #1a1300 */
+
+        /* Secondary / Muted (Surface 2) */
+        --secondary: 30 14% 12%;
+        /* #221f1a */
+        --secondary-foreground: 38 22% 78%;
+        /* #d4c9b8 (Text) */
+        --muted: 30 14% 12%;
+        --muted-foreground: 34 11% 49%;
+        /* #8a7e6e (Text Dim) */
+
+        /* Accents (Amber Dim / Glow) */
+        --accent: 30 14% 12%;
+        /* Keep as Surface 2 for hover effects */
+        --accent-foreground: 38 79% 56%;
+        /* #e8a838 (Amber) for active states */
+
+        /* Destructive (Red) */
+        --destructive: 7 69% 58%;
+        /* #e05c4a */
+        --destructive-foreground: 0 0% 100%;
+
+        /* Borders & Inputs */
+        --border: 38 13% 19%;
+        /* #38332b */
+        --input: 38 13% 19%;
+        /* Same as border, inputs utilize surface2 bg usually */
+        --ring: 39 72% 45%;
+        /* #c48a20 (Amber Dim) */
+
+        /* Functional Colors */
+        --success: 124 25% 55%;
+        /* #6dab72 */
+        --success-foreground: 38 50% 90%;
+        --info: 206 60% 59%;
+        /* #5a9fd4 */
+        --info-foreground: 24 13% 5%;
+
+        /* Radius */
+        --radius: 0.625rem;
+        /* 10px */
+
+        /* Charts (Keeping default or adjusting to theme palette could be nice, but sticking to defaults for now unless specified) */
+        --chart-1: 38 79% 56%;
+        /* Amber */
+        --chart-2: 124 25% 55%;
+        /* Green */
+        --chart-3: 206 60% 59%;
+        /* Blue */
+        --chart-4: 43 74% 66%;
+        --chart-5: 27 87% 67%;
+    }
+
+    .dark {
+        /* Since the theme IS dark mode by default, we just replicate the root values or minor adjustments if needed.
+       For now, we assume the app runs in this dark theme primarily. */
+        --background: 24 13% 5%;
+        --foreground: 38 50% 90%;
+
+        --card: 24 16% 9%;
+        --card-foreground: 38 50% 90%;
+
+        --popover: 24 16% 9%;
+        --popover-foreground: 38 50% 90%;
+
+        --primary: 38 79% 56%;
+        --primary-foreground: 43 100% 5%;
+
+        --secondary: 30 14% 12%;
+        --secondary-foreground: 38 22% 78%;
+
+        --muted: 30 14% 12%;
+        --muted-foreground: 34 11% 49%;
+
+        --accent: 30 14% 12%;
+        --accent-foreground: 38 79% 56%;
+
+        --destructive: 7 69% 58%;
+        --destructive-foreground: 0 0% 100%;
+
+        --border: 38 13% 19%;
+        --input: 38 13% 19%;
+        --ring: 39 72% 45%;
+    }
+}
+
+@layer base {
+    * {
+        @apply border-border;
+    }
+
+    body {
+        @apply bg-background text-foreground;
+        font-feature-settings: "rlig" 1, "calt" 1;
+    }
+}
