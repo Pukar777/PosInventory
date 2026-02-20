@@ -3,80 +3,109 @@
 namespace App\Http\Controllers;
 
 use App\Models\MenuItem;
-use Illuminate\Http\Request;
+use App\Http\Requests\MenuItemRequest;
+use App\Services\ApiResponse;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Exception;
 
 class MenuItemController extends Controller
 {
     public function index()
     {
-        $menuItems = MenuItem::with(['category', 'ingredients'])->get();
-        return response()->json($menuItems);
+        $menuItems = MenuItem::with(['category', 'ingredients'])->orderBy('id', 'desc')->get();
+        return ApiResponse::success($menuItems, 'Menu items retrieved successfully.');
     }
 
-    public function store(Request $request)
+    public function store(MenuItemRequest $request)
     {
-        $validated = $request->validate([
-            'category_id' => 'required|exists:categories,id',
-            'name' => 'required|string|max:255',
-            'price' => 'required|numeric|min:0',
-            'image' => 'nullable|string',
-            'is_available' => 'boolean',
-            'ingredients' => 'nullable|array',
-            'ingredients.*.id' => 'required_with:ingredients|exists:ingredients,id',
-            'ingredients.*.quantity' => 'required_with:ingredients|numeric|min:0.001',
-        ]);
+        try {
+            DB::beginTransaction();
 
-        $menuItem = MenuItem::create($validated);
-
-        if (!empty($validated['ingredients'])) {
-            $ingredientsData = [];
-            foreach ($validated['ingredients'] as $ingredient) {
-                $ingredientsData[$ingredient['id']] = ['quantity_required' => $ingredient['quantity']];
+            $validated = $request->validated();
+            
+            if ($request->hasFile('image')) {
+                $path = $request->file('image')->store('menu_items', 'public');
+                $validated['image'] = $path;
             }
-            $menuItem->ingredients()->sync($ingredientsData);
-        }
 
-        return response()->json($menuItem->load(['category', 'ingredients']), 201);
-    }
+            $menuItem = MenuItem::create($validated);
 
-    public function show(MenuItem $menuItem)
-    {
-        return response()->json($menuItem->load(['category', 'ingredients']));
-    }
-
-    public function update(Request $request, MenuItem $menuItem)
-    {
-        $validated = $request->validate([
-            'category_id' => 'sometimes|required|exists:categories,id',
-            'name' => 'sometimes|required|string|max:255',
-            'price' => 'sometimes|required|numeric|min:0',
-            'image' => 'sometimes|nullable|string',
-            'is_available' => 'sometimes|boolean',
-            'ingredients' => 'nullable|array',
-            'ingredients.*.id' => 'required_with:ingredients|exists:ingredients,id',
-            'ingredients.*.quantity' => 'required_with:ingredients|numeric|min:0.001',
-        ]);
-
-        $menuItem->update($validated);
-
-        if (array_key_exists('ingredients', $validated)) {
-             if (!empty($validated['ingredients'])) {
+            if (!empty($validated['ingredients'])) {
                 $ingredientsData = [];
                 foreach ($validated['ingredients'] as $ingredient) {
                     $ingredientsData[$ingredient['id']] = ['quantity_required' => $ingredient['quantity']];
                 }
                 $menuItem->ingredients()->sync($ingredientsData);
-            } else {
-                $menuItem->ingredients()->detach();
             }
-        }
 
-        return response()->json($menuItem->load(['category', 'ingredients']));
+            DB::commit();
+
+            return ApiResponse::success($menuItem->load(['category', 'ingredients']), 'Menu item created successfully.', 201);
+        } catch (Exception $e) {
+            DB::rollBack();
+            return ApiResponse::error('Failed to create menu item.', 500, ['error' => $e->getMessage()]);
+        }
+    }
+
+    public function show(MenuItem $menuItem)
+    {
+        return ApiResponse::success($menuItem->load(['category', 'ingredients']), 'Menu item retrieved successfully.');
+    }
+
+    public function update(MenuItemRequest $request, MenuItem $menuItem)
+    {
+        try {
+            DB::beginTransaction();
+
+            $validated = $request->validated();
+
+            if ($request->hasFile('image')) {
+                if ($menuItem->image && !preg_match('/[\x{1F600}-\x{1F64F}]/u', $menuItem->image) && Storage::disk('public')->exists($menuItem->image)) {
+                    Storage::disk('public')->delete($menuItem->image);
+                }
+                $path = $request->file('image')->store('menu_items', 'public');
+                $validated['image'] = $path;
+            }
+
+            $menuItem->update($validated);
+
+            if (array_key_exists('ingredients', $validated)) {
+                 if (!empty($validated['ingredients'])) {
+                    $ingredientsData = [];
+                    foreach ($validated['ingredients'] as $ingredient) {
+                        $ingredientsData[$ingredient['id']] = ['quantity_required' => $ingredient['quantity']];
+                    }
+                    $menuItem->ingredients()->sync($ingredientsData);
+                } else {
+                    $menuItem->ingredients()->detach();
+                }
+            }
+
+            DB::commit();
+
+            return ApiResponse::success($menuItem->load(['category', 'ingredients']), 'Menu item updated successfully.');
+        } catch (Exception $e) {
+            DB::rollBack();
+            return ApiResponse::error('Failed to update menu item.', 500, ['error' => $e->getMessage()]);
+        }
     }
 
     public function destroy(MenuItem $menuItem)
     {
-        $menuItem->delete();
-        return response()->json(null, 204);
+        try {
+            DB::beginTransaction();
+            
+            if ($menuItem->image && !preg_match('/[\x{1F600}-\x{1F64F}]/u', $menuItem->image) && Storage::disk('public')->exists($menuItem->image)) {
+                Storage::disk('public')->delete($menuItem->image);
+            }
+            
+            $menuItem->delete();
+            DB::commit();
+            return ApiResponse::success(null, 'Menu item deleted successfully.', 200);
+        } catch (Exception $e) {
+            DB::rollBack();
+            return ApiResponse::error('Failed to delete menu item.', 500, ['error' => $e->getMessage()]);
+        }
     }
 }
