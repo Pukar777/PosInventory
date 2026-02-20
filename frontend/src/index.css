@@ -119,4 +119,29 @@
         @apply bg-background text-foreground;
         font-feature-settings: "rlig" 1, "calt" 1;
     }
+
+    /*
+     * Fix browser autofill overriding dark theme input styles.
+     * Browsers (Chrome/Edge) force a yellow/white background via :-webkit-autofill
+     * which cannot be overridden directly. The box-shadow inset trick paints
+     * over the browser's forced background. -webkit-text-fill-color overrides
+     * the forced dark text colour.
+     */
+    input:-webkit-autofill,
+    input:-webkit-autofill:hover,
+    input:-webkit-autofill:focus,
+    input:-webkit-autofill:active {
+        /* Paint over the forced autofill background with our dark background colour */
+        -webkit-box-shadow: 0 0 0 9999px hsl(24 13% 5%) inset !important;
+        box-shadow: 0 0 0 9999px hsl(24 13% 5%) inset !important;
+
+        /* Restore our light foreground text colour */
+        -webkit-text-fill-color: hsl(38 50% 90%) !important;
+
+        /* Keep the caret visible */
+        caret-color: hsl(38 50% 90%);
+
+        /* Prevent unwanted transitions on autofill */
+        transition: background-color 5000s ease-in-out 0s;
+    }
 }

@@ -63,12 +63,15 @@ function AppContent() {
   )
 }
 
+import { Toaster } from 'sonner'
+
 function App() {
   return (
     <AuthProvider>
       <Router>
         <AppContent />
       </Router>
+      <Toaster position="top-center" richColors />
     </AuthProvider>
   )
 }
