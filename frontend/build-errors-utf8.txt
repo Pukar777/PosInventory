@@ -1,0 +1,22 @@
+﻿src/pages/admin/ingredients/IngredientsPage.tsx(33,13): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(values: readonly ["kg", "gram", "piece", "liter", "ml"], params?: string | { error?: string | $ZodErrorMap<$ZodIssueInvalidValue<unknown>> | undefined; message?: string | undefined; } | undefined): ZodEnum<...>', gave the following error.
+    Object literal may only specify known properties, and 'errorMap' does not exist in type '{ error?: string | $ZodErrorMap<$ZodIssueInvalidValue<unknown>> | undefined; message?: string | undefined; }'.
+  Overload 2 of 2, '(entries: Readonly<Record<string, EnumValue>>, params?: string | { error?: string | $ZodErrorMap<$ZodIssueInvalidValue<unknown>> | undefined; message?: string | undefined; } | undefined): ZodEnum<...>', gave the following error.
+    Argument of type 'readonly ["kg", "gram", "piece", "liter", "ml"]' is not assignable to parameter of type 'Readonly<Record<string, EnumValue>>'.
+      Index signature for type 'string' is missing in type 'readonly ["kg", "gram", "piece", "liter", "ml"]'.
+src/pages/admin/ingredients/IngredientsPage.tsx(57,9): error TS2322: Type 'Resolver<{ name: string; unit: "kg" | "gram" | "piece" | "liter" | "ml"; current_stock?: unknown; minimum_stock?: unknown; }, any, { name: string; unit: "kg" | "gram" | "piece" | "liter" | "ml"; current_stock: number; minimum_stock: number; }>' is not assignable to type 'Resolver<{ name: string; unit: "kg" | "gram" | "piece" | "liter" | "ml"; current_stock: number; minimum_stock: number; }, any, { name: string; unit: "kg" | "gram" | "piece" | "liter" | "ml"; current_stock: number; minimum_stock: number; }>'.
+  Types of parameters 'options' and 'options' are incompatible.
+    Type 'ResolverOptions<{ name: string; unit: "kg" | "gram" | "piece" | "liter" | "ml"; current_stock: number; minimum_stock: number; }>' is not assignable to type 'ResolverOptions<{ name: string; unit: "kg" | "gram" | "piece" | "liter" | "ml"; current_stock?: unknown; minimum_stock?: unknown; }>'.
+      Type 'unknown' is not assignable to type 'number'.
+src/pages/admin/ingredients/IngredientsPage.tsx(230,50): error TS2345: Argument of type '(data: IngredientFormValues) => Promise<void>' is not assignable to parameter of type 'SubmitHandler<TFieldValues>'.
+  Types of parameters 'data' and 'data' are incompatible.
+    Type 'TFieldValues' is not assignable to type '{ name: string; unit: "kg" | "gram" | "piece" | "liter" | "ml"; current_stock: number; minimum_stock: number; }'.
+      Type 'FieldValues' is missing the following properties from type '{ name: string; unit: "kg" | "gram" | "piece" | "liter" | "ml"; current_stock: number; minimum_stock: number; }': name, unit, current_stock, minimum_stock
+src/pages/admin/menu-items/MenuItemsPage.tsx(86,9): error TS2322: Type 'Resolver<{ name: string; category_id: unknown; price: unknown; is_available?: boolean | undefined; }, any, { name: string; category_id: number; price: number; is_available: boolean; }>' is not assignable to type 'Resolver<{ name: string; category_id: number; price: number; is_available: boolean; }, any, { name: string; category_id: number; price: number; is_available: boolean; }>'.
+  Types of parameters 'options' and 'options' are incompatible.
+    Type 'ResolverOptions<{ name: string; category_id: number; price: number; is_available: boolean; }>' is not assignable to type 'ResolverOptions<{ name: string; category_id: unknown; price: unknown; is_available?: boolean | undefined; }>'.
+      Type 'unknown' is not assignable to type 'number'.
+src/pages/admin/menu-items/MenuItemsPage.tsx(310,50): error TS2345: Argument of type '(data: MenuItemFormValues) => Promise<void>' is not assignable to parameter of type 'SubmitHandler<TFieldValues>'.
+  Types of parameters 'data' and 'data' are incompatible.
+    Type 'TFieldValues' is not assignable to type '{ name: string; category_id: number; price: number; is_available: boolean; }'.
+      Type 'FieldValues' is missing the following properties from type '{ name: string; category_id: number; price: number; is_available: boolean; }': name, category_id, price, is_available
