@@ -20,6 +20,15 @@ import {
 } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { useApi } from '@/hooks/useApi'
+import { z } from 'zod'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+
+const categorySchema = z.object({
+    name: z.string().min(2, "Name must be at least 2 characters"),
+})
+
+type CategoryFormValues = z.infer<typeof categorySchema>
 
 interface Category {
     id: number
@@ -33,10 +42,14 @@ export default function CategoriesPage() {
     const [isDialogOpen, setIsDialogOpen] = useState(false)
     const [isDeleting, setIsDeleting] = useState<number | null>(null)
 
-    // Form State
     const [editingId, setEditingId] = useState<number | null>(null)
-    const [name, setName] = useState('')
-    const [error, setError] = useState('')
+
+    const form = useForm<CategoryFormValues>({
+        resolver: zodResolver(categorySchema),
+        defaultValues: { name: '' },
+    })
+
+    const { register, handleSubmit, reset, formState: { errors } } = form
 
     const { request } = useApi()
 
@@ -57,42 +70,35 @@ export default function CategoriesPage() {
     }, [])
 
     const handleOpenDialog = (category?: Category) => {
-        setError('')
         if (category) {
             setEditingId(category.id)
-            setName(category.name)
+            reset({ name: category.name })
         } else {
             setEditingId(null)
-            setName('')
+            reset({ name: '' })
         }
         setIsDialogOpen(true)
     }
 
-    const handleSave = async (e: React.FormEvent) => {
-        e.preventDefault()
-        if (!name.trim()) {
-            setError('Name is required')
-            return
-        }
-
+    const onSubmit = async (data: CategoryFormValues) => {
         try {
             if (editingId) {
                 await request({
                     url: `/categories/${editingId}`,
                     method: 'PUT',
-                    data: { name },
+                    data: { name: data.name },
                 })
             } else {
                 await request({
                     url: '/categories',
                     method: 'POST',
-                    data: { name },
+                    data: { name: data.name },
                 })
             }
             setIsDialogOpen(false)
             fetchCategories()
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Action failed')
+            form.setError('root', { message: err.response?.data?.message || 'Action failed' })
         }
     }
 
@@ -173,7 +179,7 @@ export default function CategoriesPage() {
 
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogContent className="sm:max-w-[425px]">
-                    <form onSubmit={handleSave}>
+                    <form onSubmit={handleSubmit(onSubmit)}>
                         <DialogHeader>
                             <DialogTitle>{editingId ? 'Edit Category' : 'Create Category'}</DialogTitle>
                             <DialogDescription>
@@ -183,21 +189,22 @@ export default function CategoriesPage() {
                             </DialogDescription>
                         </DialogHeader>
                         <div className="grid gap-4 py-4">
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="name" className="text-right">
+                            <div className="grid grid-cols-4 items-start gap-4">
+                                <Label htmlFor="name" className="text-right mt-3">
                                     Name
                                 </Label>
-                                <Input
-                                    id="name"
-                                    value={name}
-                                    onChange={(e) => setName(e.target.value)}
-                                    className="col-span-3"
-                                    placeholder="e.g. Appetizers, Mains, Drinks"
-                                    autoFocus
-                                />
+                                <div className="col-span-3 space-y-2">
+                                    <Input
+                                        id="name"
+                                        {...register("name")}
+                                        placeholder="e.g. Appetizers, Mains, Drinks"
+                                        autoFocus
+                                    />
+                                    {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
+                                </div>
                             </div>
-                            {error && (
-                                <div className="text-destructive text-sm font-medium text-center">{error}</div>
+                            {errors.root && (
+                                <div className="text-destructive text-sm font-medium text-center">{errors.root.message}</div>
                             )}
                         </div>
                         <DialogFooter>
