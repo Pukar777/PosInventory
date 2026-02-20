@@ -47,7 +47,7 @@
         ],
         "dev": [
             "Composer\\Config::disableProcessTimeout",
-            "npx concurrently -c \"#93c5fd,#c4b5fd\" \"php artisan serve\" \"php artisan reverb:start\" --names=server,reverb"
+            "npx concurrently -c \"#93c5fd,#c4b5fd\" \"php artisan serve --host=0.0.0.0\" \"php artisan reverb:start --host=0.0.0.0\" --names=server,reverb"
         ],
         "test": [
             "@php artisan config:clear --ansi",
