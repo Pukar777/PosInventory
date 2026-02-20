@@ -4,40 +4,44 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use Illuminate\Http\Request;
+use App\Services\ApiResponse;
 
 class CategoryController extends Controller
 {
     public function index()
     {
-        return response()->json(Category::all());
+        $categories = Category::withCount('menuItems')->get();
+        return ApiResponse::success($categories, 'Categories retrieved successfully');
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:255|unique:categories,name',
         ]);
+        
         $category = Category::create($validated);
-        return response()->json($category, 201);
+        return ApiResponse::success($category, 'Category created successfully', 201);
     }
 
     public function show(Category $category)
     {
-        return response()->json($category);
+        return ApiResponse::success($category, 'Category retrieved successfully');
     }
 
     public function update(Request $request, Category $category)
     {
         $validated = $request->validate([
-            'name' => 'sometimes|required|string|max:255',
+            'name' => 'sometimes|required|string|max:255|unique:categories,name,' . $category->id,
         ]);
+        
         $category->update($validated);
-        return response()->json($category);
+        return ApiResponse::success($category, 'Category updated successfully');
     }
 
     public function destroy(Category $category)
     {
         $category->delete();
-        return response()->json(null, 204);
+        return ApiResponse::success(null, 'Category deleted successfully', 200);
     }
 }
