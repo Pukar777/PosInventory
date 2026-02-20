@@ -3,8 +3,15 @@ import type { ReactNode } from 'react';
 
 import { useApi } from '@/hooks/useApi';
 
+export interface User {
+    id: number;
+    name: string;
+    email: string;
+    role: 'admin' | 'waiter';
+}
+
 interface AuthContextType {
-    user: any;
+    user: User | null;
     token: string | null;
     login: (credentials: any) => Promise<void>;
     logout: () => Promise<void>;
@@ -13,7 +20,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-    const [user, setUser] = useState<any>(null);
+    const [user, setUser] = useState<User | null>(null);
     const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
 
     const { request } = useApi();

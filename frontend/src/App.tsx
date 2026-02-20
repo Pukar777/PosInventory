@@ -3,9 +3,16 @@ import { AuthProvider, useAuth } from '@/context/AuthContext'
 import LoginPage from '@/pages/LoginPage'
 import './App.css'
 
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { token } = useAuth()
+import type { User } from '@/context/AuthContext'
+
+function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode, allowedRoles?: User['role'][] }) {
+  const { token, user } = useAuth()
   if (!token) return <Navigate to="/login" />
+
+  if (allowedRoles && user && !allowedRoles.includes(user.role)) {
+    return <Navigate to="/login" /> // Or a dedicated unauthorized page
+  }
+
   return <>{children}</>
 }
 
@@ -31,7 +38,7 @@ function AppContent() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/" element={
-        <ProtectedRoute>
+        <ProtectedRoute allowedRoles={['admin']}>
           <Dashboard />
         </ProtectedRoute>
       } />
