@@ -16,12 +16,6 @@ export default function InventoryDemoPage() {
 
     return (
         <div className="p-6 h-full flex flex-col">
-            <div className="flex items-center justify-between mb-6">
-                <h1 className="text-2xl font-bold font-serif text-foreground">
-                    Inventory <span className="text-amber-500 italic">Demo</span>
-                </h1>
-            </div>
-
             <div className="flex items-center gap-2 mb-6 border-b border-border pb-px">
                 {tabs.map(tab => (
                     <button

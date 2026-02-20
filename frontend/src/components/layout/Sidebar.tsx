@@ -47,7 +47,7 @@ export function Sidebar({ isMobileMenuOpen, closeMobileMenu }: SidebarProps) {
                 <div className="mb-2 mt-4 px-3 text-[10px] font-semibold tracking-widest text-muted-foreground uppercase first:mt-0">
                     Overview
                 </div>
-                <NavLink to="/" end onClick={closeMobileMenu} className={navLinkClass}>
+                <NavLink to="/overview/dashboard" onClick={closeMobileMenu} className={navLinkClass}>
                     {({ isActive }) => (
                         <>
                             <LayoutDashboard className={iconClass(isActive)} />
@@ -75,7 +75,7 @@ export function Sidebar({ isMobileMenuOpen, closeMobileMenu }: SidebarProps) {
                 <div className="mb-2 mt-6 px-3 text-[10px] font-semibold tracking-widest text-muted-foreground uppercase">
                     Management
                 </div>
-                <NavLink to="/admin/categories" onClick={closeMobileMenu} className={navLinkClass}>
+                <NavLink to="/management/categories" onClick={closeMobileMenu} className={navLinkClass}>
                     {({ isActive }) => (
                         <>
                             <Package className={iconClass(isActive)} />
@@ -83,7 +83,7 @@ export function Sidebar({ isMobileMenuOpen, closeMobileMenu }: SidebarProps) {
                         </>
                     )}
                 </NavLink>
-                <NavLink to="/admin/menu-items" onClick={closeMobileMenu} className={navLinkClass}>
+                <NavLink to="/management/menu-items" onClick={closeMobileMenu} className={navLinkClass}>
                     {({ isActive }) => (
                         <>
                             <MenuSquare className={iconClass(isActive)} />
@@ -91,7 +91,7 @@ export function Sidebar({ isMobileMenuOpen, closeMobileMenu }: SidebarProps) {
                         </>
                     )}
                 </NavLink>
-                <NavLink to="/admin/ingredients" onClick={closeMobileMenu} className={navLinkClass}>
+                <NavLink to="/management/ingredients" onClick={closeMobileMenu} className={navLinkClass}>
                     {({ isActive }) => (
                         <>
                             <Beaker className={iconClass(isActive)} />
@@ -100,7 +100,7 @@ export function Sidebar({ isMobileMenuOpen, closeMobileMenu }: SidebarProps) {
                         </>
                     )}
                 </NavLink>
-                <NavLink to="/admin/recipes" onClick={closeMobileMenu} className={navLinkClass}>
+                <NavLink to="/management/recipes" onClick={closeMobileMenu} className={navLinkClass}>
                     {({ isActive }) => (
                         <>
                             <BookText className={iconClass(isActive)} />
@@ -112,7 +112,7 @@ export function Sidebar({ isMobileMenuOpen, closeMobileMenu }: SidebarProps) {
                 <div className="mb-2 mt-6 px-3 text-[10px] font-semibold tracking-widest text-muted-foreground uppercase">
                     Operations
                 </div>
-                <NavLink to="/new-order" onClick={closeMobileMenu} className={navLinkClass}>
+                <NavLink to="/operations/new-order" onClick={closeMobileMenu} className={navLinkClass}>
                     {({ isActive }) => (
                         <>
                             <UtensilsCrossed className={iconClass(isActive)} />
@@ -120,7 +120,7 @@ export function Sidebar({ isMobileMenuOpen, closeMobileMenu }: SidebarProps) {
                         </>
                     )}
                 </NavLink>
-                <NavLink to="/admin/orders" onClick={closeMobileMenu} className={navLinkClass}>
+                <NavLink to="/operations/orders" onClick={closeMobileMenu} className={navLinkClass}>
                     {({ isActive }) => (
                         <>
                             <ClipboardList className={iconClass(isActive)} />
@@ -128,7 +128,7 @@ export function Sidebar({ isMobileMenuOpen, closeMobileMenu }: SidebarProps) {
                         </>
                     )}
                 </NavLink>
-                <NavLink to="/admin/stock-logs" onClick={closeMobileMenu} className={navLinkClass}>
+                <NavLink to="/operations/stock-log" onClick={closeMobileMenu} className={navLinkClass}>
                     {({ isActive }) => (
                         <>
                             <History className={iconClass(isActive)} />

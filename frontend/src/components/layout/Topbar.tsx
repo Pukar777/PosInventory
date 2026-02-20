@@ -12,14 +12,14 @@ export function Topbar({ setIsMobileMenuOpen }: TopbarProps) {
 
     const getPageTitle = () => {
         const path = location.pathname;
-        if (path === '/') return <><span className="text-foreground font-semibold">Dashboard</span> <span className="text-primary italic">Overview</span></>;
+        if (path.includes('dashboard') && !path.includes('demo')) return <><span className="text-foreground font-semibold">Dashboard</span> <span className="text-primary italic">Overview</span></>;
         if (path.includes('categories')) return <><span className="text-foreground font-semibold">Categories</span> <span className="text-primary italic">Management</span></>;
         if (path.includes('menu-items') || path === '/menu') return <><span className="text-foreground font-semibold">Menu Items</span> <span className="text-primary italic">Management</span></>;
         if (path.includes('ingredients')) return <><span className="text-foreground font-semibold">Ingredients</span> <span className="text-primary italic">Management</span></>;
         if (path.includes('recipes')) return <><span className="text-foreground font-semibold">Recipes</span> <span className="text-primary italic">Management</span></>;
         if (path.includes('new-order')) return <><span className="text-foreground font-semibold">New Order</span> <span className="text-primary italic">Operations</span></>;
         if (path.includes('orders')) return <><span className="text-foreground font-semibold">Orders</span> <span className="text-primary italic">Operations</span></>;
-        if (path.includes('stock-logs')) return <><span className="text-foreground font-semibold">Stock Log</span> <span className="text-primary italic">Operations</span></>;
+        if (path.includes('stock-log')) return <><span className="text-foreground font-semibold">Stock Log</span> <span className="text-primary italic">Operations</span></>;
         if (path.includes('dashboard-demo')) return <><span className="text-foreground font-semibold">Demo Dashboard</span> <span className="text-primary italic">Overview</span></>;
         if (path.includes('inventory-demo')) return <><span className="text-foreground font-semibold">Demo Inventory</span> <span className="text-primary italic">Overview</span></>;
         return <><span className="text-foreground font-semibold">Mise en Place</span> <span className="text-primary italic">System</span></>;

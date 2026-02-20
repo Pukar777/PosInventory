@@ -1,40 +1,96 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2 } from 'lucide-react';
 import { PageHeader } from '../shared/PageHeader';
 import { DataTableCard, DataTableHeader, DataTableHead, DataTableRow, DataTableCell, Table, TableBody } from '../shared/DataTable';
 import { CatPill } from '../shared/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { AddCategoryModal, EditCategoryModal, type Category } from './CategoryModals';
-
-const initialCategories: Category[] = [
-    { id: 1, name: 'Main Course', itemCount: 4, created: '2025-01-10' },
-    { id: 2, name: 'Drinks', itemCount: 2, created: '2025-01-10' },
-    { id: 3, name: 'Desserts', itemCount: 1, created: '2025-01-12' },
-    { id: 4, name: 'Starters', itemCount: 1, created: '2025-01-15' },
-];
+import { useApi } from '@/hooks/useApi';
+import { toast } from 'sonner';
 
 export function CategoriesView() {
-    const [categories, setCategories] = useState<Category[]>(initialCategories);
+    const { request } = useApi();
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editCat, setEditCat] = useState<Category | null>(null);
 
-    const handleAdd = (name: string) => {
-        setCategories([...categories, {
-            id: Date.now(),
-            name: name,
-            itemCount: 0,
-            created: new Date().toISOString().split('T')[0]
-        }]);
+    const fetchCategories = async () => {
+        setIsLoading(true);
+        try {
+            const response = await request({ url: '/categories', method: 'GET' });
+            if (response.data.success) {
+                // Map backend keys to frontend expected ones, if needed
+                const fetched = response.data.data.map((c: any) => ({
+                    id: c.id,
+                    name: c.name,
+                    itemCount: c.menu_items_count || 0,
+                    created: new Date(c.created_at).toISOString().split('T')[0]
+                }));
+                setCategories(fetched);
+            }
+        } catch (error) {
+            console.error('Error fetching categories:', error);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    const handleEdit = (id: number, name: string) => {
-        setCategories(categories.map(c => c.id === id ? { ...c, name } : c));
-        setEditCat(null);
+    useEffect(() => {
+        fetchCategories();
+    }, []);
+
+    const handleAdd = async (name: string) => {
+        try {
+            const response = await request({
+                url: '/categories',
+                method: 'POST',
+                data: { name }
+            });
+            if (response.data.success) {
+                fetchCategories();
+                toast.success('Category created successfully');
+            }
+        } catch (error: any) {
+            console.error('Error creating category:', error);
+            toast.error(error.response?.data?.message || 'Failed to create category');
+        }
     };
 
-    const handleDelete = (id: number) => {
-        setCategories(categories.filter(c => c.id !== id));
+    const handleEdit = async (id: number, name: string) => {
+        try {
+            const response = await request({
+                url: `/categories/${id}`,
+                method: 'PUT',
+                data: { name }
+            });
+            if (response.data.success) {
+                fetchCategories();
+                setEditCat(null);
+                toast.success('Category updated successfully');
+            }
+        } catch (error: any) {
+            console.error('Error updating category:', error);
+            toast.error(error.response?.data?.message || 'Failed to update category');
+        }
+    };
+
+    const handleDelete = async (id: number) => {
+        if (!confirm('Are you sure you want to delete this category?')) return;
+        try {
+            const response = await request({
+                url: `/categories/${id}`,
+                method: 'DELETE'
+            });
+            if (response.data.success) {
+                fetchCategories();
+                toast.success('Category deleted successfully');
+            }
+        } catch (error: any) {
+            console.error('Error deleting category:', error);
+            toast.error(error.response?.data?.message || 'Failed to delete category');
+        }
     };
 
     return (
@@ -56,7 +112,11 @@ export function CategoriesView() {
                         <DataTableHead className="text-right">Actions</DataTableHead>
                     </DataTableHeader>
                     <TableBody>
-                        {categories.length === 0 ? (
+                        {isLoading ? (
+                            <DataTableRow>
+                                <DataTableCell colSpan={5} className="text-center text-muted-foreground italic py-10">Loading categories...</DataTableCell>
+                            </DataTableRow>
+                        ) : categories.length === 0 ? (
                             <DataTableRow>
                                 <DataTableCell colSpan={5} className="text-center text-muted-foreground italic py-10">No categories yet</DataTableCell>
                             </DataTableRow>

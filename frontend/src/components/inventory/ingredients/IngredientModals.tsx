@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -9,8 +9,8 @@ export interface Ingredient {
     id: number;
     name: string;
     unit: string;
-    stock: number;
-    min: number;
+    current_stock: number;
+    minimum_stock: number;
     status: 'good' | 'warn' | 'low';
 }
 
@@ -42,8 +42,8 @@ export function AddIngredientModal({ open, onOpenChange, onAdd }: AddIngredientM
         onAdd({
             name,
             unit,
-            stock: stockNum,
-            min: minNum,
+            current_stock: stockNum,
+            minimum_stock: minNum,
             status
         });
 
@@ -98,6 +98,96 @@ export function AddIngredientModal({ open, onOpenChange, onAdd }: AddIngredientM
     );
 }
 
+interface EditIngredientModalProps {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    ingredient: Ingredient | null;
+    onEdit: (id: number, ingredient: Omit<Ingredient, 'id'>) => void;
+}
+
+export function EditIngredientModal({ open, onOpenChange, ingredient, onEdit }: EditIngredientModalProps) {
+    const [name, setName] = useState(ingredient?.name || '');
+    const [unit, setUnit] = useState(ingredient?.unit || 'kg');
+    const [stock, setStock] = useState(ingredient?.current_stock?.toString() || '');
+    const [min, setMin] = useState(ingredient?.minimum_stock?.toString() || '');
+
+    // Reset state when ingredient changes
+    useEffect(() => {
+        if (ingredient) {
+            setName(ingredient.name);
+            setUnit(ingredient.unit);
+            setStock(ingredient.current_stock.toString());
+            setMin(ingredient.minimum_stock.toString());
+        }
+    }, [ingredient]);
+
+    const handleEdit = () => {
+        if (!ingredient || !name.trim() || !stock || !min) return;
+
+        const stockNum = parseFloat(stock);
+        const minNum = parseFloat(min);
+        let status: 'good' | 'warn' | 'low' = 'good';
+
+        if (stockNum <= minNum) {
+            status = 'low';
+        } else if (stockNum <= minNum * 1.5) {
+            status = 'warn';
+        }
+
+        onEdit(ingredient.id, {
+            name,
+            unit,
+            current_stock: stockNum,
+            minimum_stock: minNum,
+            status
+        });
+
+        onOpenChange(false);
+    };
+
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="sm:max-w-[500px]">
+                <DialogHeader><DialogTitle className="font-serif text-xl">Edit Ingredient</DialogTitle></DialogHeader>
+                <div className="grid gap-4 py-4">
+                    <div className="flex flex-col gap-2">
+                        <Label className="text-xs uppercase tracking-wider text-muted-foreground">Ingredient Name</Label>
+                        <Input placeholder="e.g. Tomato" value={name} onChange={(e) => setName(e.target.value)} />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="flex flex-col gap-2">
+                            <Label className="text-xs uppercase tracking-wider text-muted-foreground">Unit</Label>
+                            <Select value={unit} onValueChange={setUnit}>
+                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="kg">kg</SelectItem>
+                                    <SelectItem value="gram">gram</SelectItem>
+                                    <SelectItem value="piece">piece</SelectItem>
+                                    <SelectItem value="liter">liter</SelectItem>
+                                    <SelectItem value="ml">ml</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <Label className="text-xs uppercase tracking-wider text-muted-foreground">Current Stock</Label>
+                            <Input type="number" placeholder="0" step="0.1" value={stock} onChange={(e) => setStock(e.target.value)} />
+                        </div>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                        <Label className="text-xs uppercase tracking-wider text-muted-foreground">Minimum Stock Alert</Label>
+                        <Input type="number" placeholder="0" step="0.1" value={min} onChange={(e) => setMin(e.target.value)} />
+                        <p className="text-[11px] text-muted-foreground mt-1">System will alert when stock drops below this value</p>
+                    </div>
+                </div>
+                <DialogFooter>
+                    <Button variant="secondary" onClick={() => onOpenChange(false)}>Cancel</Button>
+                    <Button className="bg-amber-500 text-amber-950 hover:bg-amber-500/90" onClick={handleEdit}>Save Changes</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
 interface StockInModalProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
@@ -133,7 +223,7 @@ export function StockInModal({ open, onOpenChange, ingredients, onStockIn }: Sto
                             <SelectContent>
                                 {ingredients.map(i => (
                                     <SelectItem key={i.id} value={i.id.toString()}>
-                                        {i.name} ({i.stock} {i.unit})
+                                        {i.name} ({i.current_stock} {i.unit})
                                     </SelectItem>
                                 ))}
                             </SelectContent>
