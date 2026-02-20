@@ -44,6 +44,8 @@ import AdminLayout from '@/components/AdminLayout'
 import CategoriesPage from '@/pages/admin/categories/CategoriesPage'
 import IngredientsPage from '@/pages/admin/ingredients/IngredientsPage'
 import MenuItemsPage from '@/pages/admin/menu-items/MenuItemsPage'
+import OrdersPage from '@/pages/admin/orders/OrdersPage'
+import NewOrderPage from '@/pages/waiter/NewOrderPage'
 
 function AppContent() {
   return (
@@ -55,9 +57,11 @@ function AppContent() {
         </ProtectedRoute>
       }>
         <Route index element={<Dashboard />} />
-        <Route path="admin/categories" element={<CategoriesPage />} />
-        <Route path="admin/ingredients" element={<IngredientsPage />} />
-        <Route path="admin/menu-items" element={<MenuItemsPage />} />
+        <Route path="/admin/categories" element={<CategoriesPage />} />
+        <Route path="/admin/ingredients" element={<IngredientsPage />} />
+        <Route path="/admin/menu-items" element={<MenuItemsPage />} />
+        <Route path="/admin/orders" element={<OrdersPage />} />
+        <Route path="/new-order" element={<NewOrderPage />} />
       </Route>
     </Routes>
   )

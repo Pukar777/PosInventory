@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
-import { LogOut, Package, Beaker, MenuSquare, LayoutDashboard, Menu, X } from 'lucide-react'
+import { LogOut, Package, Beaker, MenuSquare, LayoutDashboard, Menu, X, UtensilsCrossed, ClipboardList } from 'lucide-react'
 
 export default function AdminLayout() {
     const { user, logout } = useAuth()
@@ -72,6 +72,25 @@ export default function AdminLayout() {
                             </>
                         )}
                     </NavLink>
+                    <div className="pt-4 pb-2">
+                        <p className="px-3 text-xs font-semibold tracking-wider text-muted-foreground uppercase">Orders</p>
+                    </div>
+                    <NavLink to="/new-order" onClick={closeMobileMenu} className={({ isActive }) => `flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors group ${isActive ? 'bg-primary/10 text-primary' : 'hover:bg-accent hover:text-accent-foreground text-muted-foreground'}`}>
+                        {({ isActive }) => (
+                            <>
+                                <UtensilsCrossed className={`w-5 h-5 transition-colors ${isActive ? 'text-primary' : 'group-hover:text-primary'}`} />
+                                New Order
+                            </>
+                        )}
+                    </NavLink>
+                    <NavLink to="/admin/orders" onClick={closeMobileMenu} className={({ isActive }) => `flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors group ${isActive ? 'bg-primary/10 text-primary' : 'hover:bg-accent hover:text-accent-foreground text-muted-foreground'}`}>
+                        {({ isActive }) => (
+                            <>
+                                <ClipboardList className={`w-5 h-5 transition-colors ${isActive ? 'text-primary' : 'group-hover:text-primary'}`} />
+                                All Orders
+                            </>
+                        )}
+                    </NavLink>
                 </nav>
 
                 <div className="p-4 border-t border-border/50">
@@ -109,8 +128,8 @@ export default function AdminLayout() {
                     </span>
                 </div>
 
-                <div className="flex-1 overflow-auto p-4 md:p-8">
-                    <div className="w-full h-full min-h-full">
+                <div className="flex-1 overflow-auto px-4 md:px-8 pb-8" id="page-scroll-container">
+                    <div className="w-full min-h-full flex flex-col">
                         <Outlet />
                     </div>
                 </div>

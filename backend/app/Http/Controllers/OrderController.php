@@ -1,0 +1,160 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Order;
+use App\Models\RestaurantTable;
+use App\Services\StockDeductionService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+
+class OrderController extends Controller
+{
+    public function __construct(private StockDeductionService $stockService) {}
+
+    /**
+     * GET /api/orders
+     * Returns all orders (admin) or today's orders depending on role.
+     */
+    public function index(Request $request)
+    {
+        $orders = Order::with(['table', 'orderItems.menuItem', 'user'])
+            ->latest()
+            ->get();
+
+        return response()->json($orders);
+    }
+
+    /**
+     * POST /api/orders
+     * Place a new order. Expects: table_id, items: [{menu_item_id, quantity, custom_note?}]
+     */
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'table_id'             => 'required|exists:tables,id',
+            'items'                => 'required|array|min:1',
+            'items.*.menu_item_id' => 'required|exists:menu_items,id',
+            'items.*.quantity'     => 'required|integer|min:1',
+            'items.*.custom_note'  => 'nullable|string|max:255',
+        ]);
+
+        $order = DB::transaction(function () use ($validated, $request) {
+            // Calculate total
+            $total = 0;
+            $itemsData = [];
+
+            foreach ($validated['items'] as $item) {
+                $menuItem = \App\Models\MenuItem::findOrFail($item['menu_item_id']);
+                $lineTotal = $menuItem->price * $item['quantity'];
+                $total += $lineTotal;
+
+                $itemsData[] = [
+                    'menu_item_id' => $item['menu_item_id'],
+                    'quantity'     => $item['quantity'],
+                    'unit_price'   => $menuItem->price,
+                    'custom_note'  => $item['custom_note'] ?? null,
+                ];
+            }
+
+            // Create the order
+            $order = Order::create([
+                'table_id'     => $validated['table_id'],
+                'user_id'      => $request->user()->id,
+                'status'       => 'pending',
+                'source'       => 'waiter',
+                'total_amount' => $total,
+            ]);
+
+            // Create order items
+            $order->orderItems()->createMany($itemsData);
+
+            return $order;
+        });
+
+        // Deduct stock (outside the order transaction so order is committed first)
+        try {
+            $this->stockService->deduct($order);
+        } catch (\RuntimeException $e) {
+            // Stock deduction failed — cancel the order
+            $order->update(['status' => 'cancelled']);
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
+
+        // Mark table as occupied
+        RestaurantTable::find($validated['table_id'])->update(['status' => 'occupied']);
+
+        return response()->json(
+            $order->load(['table', 'orderItems.menuItem']),
+            201
+        );
+    }
+
+    /**
+     * GET /api/orders/{id}
+     */
+    public function show(Order $order)
+    {
+        return response()->json(
+            $order->load(['table', 'orderItems.menuItem', 'user'])
+        );
+    }
+
+    /**
+     * PATCH /api/orders/{id}/status
+     * Update order status: pending → preparing → delivered | cancelled
+     */
+    public function updateStatus(Request $request, Order $order)
+    {
+        $validated = $request->validate([
+            'status' => 'required|in:pending,preparing,delivered,cancelled',
+        ]);
+
+        $previousStatus = $order->status;
+
+        $order->update(['status' => $validated['status']]);
+
+        // Reverse stock if cancelling a non-pending order that was already deducted
+        if ($validated['status'] === 'cancelled' && $previousStatus !== 'cancelled') {
+            try {
+                $this->stockService->reverse($order);
+            } catch (\Exception $e) {
+                // Log but don't block the status update
+                \Log::warning("Stock reversal failed for order #{$order->id}: " . $e->getMessage());
+            }
+
+            // Mark table as available if no other active orders
+            $activeOrders = Order::where('table_id', $order->table_id)
+                ->whereNotIn('status', ['delivered', 'cancelled'])
+                ->where('id', '!=', $order->id)
+                ->exists();
+
+            if (!$activeOrders) {
+                RestaurantTable::find($order->table_id)->update(['status' => 'available']);
+            }
+        }
+
+        // Mark table available when delivered
+        if ($validated['status'] === 'delivered') {
+            $activeOrders = Order::where('table_id', $order->table_id)
+                ->whereNotIn('status', ['delivered', 'cancelled'])
+                ->where('id', '!=', $order->id)
+                ->exists();
+
+            if (!$activeOrders) {
+                RestaurantTable::find($order->table_id)->update(['status' => 'available']);
+            }
+        }
+
+        return response()->json($order->load(['table', 'orderItems.menuItem']));
+    }
+
+    /**
+     * GET /api/tables
+     * Return all restaurant tables with status.
+     */
+    public function tables()
+    {
+        return response()->json(RestaurantTable::orderBy('number')->get());
+    }
+}
