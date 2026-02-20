@@ -46,6 +46,8 @@ import IngredientsPage from '@/pages/admin/ingredients/IngredientsPage'
 import MenuItemsPage from '@/pages/admin/menu-items/MenuItemsPage'
 import OrdersPage from '@/pages/admin/orders/OrdersPage'
 import NewOrderPage from '@/pages/waiter/NewOrderPage'
+import DashboardDemoPage from '@/pages/DashboardDemoPage'
+import InventoryDemoPage from '@/pages/InventoryDemoPage'
 
 function AppContent() {
   return (
@@ -62,6 +64,8 @@ function AppContent() {
         <Route path="/admin/menu-items" element={<MenuItemsPage />} />
         <Route path="/admin/orders" element={<OrdersPage />} />
         <Route path="/new-order" element={<NewOrderPage />} />
+        <Route path="/dashboard-demo" element={<DashboardDemoPage />} />
+        <Route path="/inventory-demo" element={<InventoryDemoPage />} />
       </Route>
     </Routes>
   )

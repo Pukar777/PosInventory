@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
-import { LogOut, Package, Beaker, MenuSquare, LayoutDashboard, Menu, X, UtensilsCrossed, ClipboardList } from 'lucide-react'
+import { LogOut, Package, Beaker, MenuSquare, LayoutDashboard, Menu, X, UtensilsCrossed, ClipboardList, MonitorPlay } from 'lucide-react'
 
 export default function AdminLayout() {
     const { user, logout } = useAuth()
@@ -42,6 +42,22 @@ export default function AdminLayout() {
                             <>
                                 <LayoutDashboard className={`w-5 h-5 transition-colors ${isActive ? 'text-primary' : 'group-hover:text-primary'}`} />
                                 Dashboard
+                            </>
+                        )}
+                    </NavLink>
+                    <NavLink to="/dashboard-demo" onClick={closeMobileMenu} className={({ isActive }) => `flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors group ${isActive ? 'bg-primary/10 text-primary' : 'hover:bg-accent hover:text-accent-foreground text-muted-foreground'}`}>
+                        {({ isActive }) => (
+                            <>
+                                <MonitorPlay className={`w-5 h-5 transition-colors ${isActive ? 'text-primary' : 'group-hover:text-primary'}`} />
+                                Demo Dashboard
+                            </>
+                        )}
+                    </NavLink>
+                    <NavLink to="/inventory-demo" onClick={closeMobileMenu} className={({ isActive }) => `flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors group ${isActive ? 'bg-primary/10 text-primary' : 'hover:bg-accent hover:text-accent-foreground text-muted-foreground'}`}>
+                        {({ isActive }) => (
+                            <>
+                                <MonitorPlay className={`w-5 h-5 transition-colors ${isActive ? 'text-primary' : 'group-hover:text-primary'}`} />
+                                Demo Inventory
                             </>
                         )}
                     </NavLink>
