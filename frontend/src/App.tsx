@@ -33,15 +33,25 @@ function Dashboard() {
   )
 }
 
+import AdminLayout from '@/components/AdminLayout'
+import CategoriesPage from '@/pages/admin/categories/CategoriesPage'
+import IngredientsPage from '@/pages/admin/ingredients/IngredientsPage'
+import MenuItemsPage from '@/pages/admin/menu-items/MenuItemsPage'
+
 function AppContent() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/" element={
         <ProtectedRoute allowedRoles={['admin']}>
-          <Dashboard />
+          <AdminLayout />
         </ProtectedRoute>
-      } />
+      }>
+        <Route index element={<Dashboard />} />
+        <Route path="admin/categories" element={<CategoriesPage />} />
+        <Route path="admin/ingredients" element={<IngredientsPage />} />
+        <Route path="admin/menu-items" element={<MenuItemsPage />} />
+      </Route>
     </Routes>
   )
 }
