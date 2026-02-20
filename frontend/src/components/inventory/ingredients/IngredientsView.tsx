@@ -5,19 +5,7 @@ import { TableToolbar } from '../shared/TableToolbar';
 import { DataTableCard, DataTableHeader, DataTableHead, DataTableRow, DataTableCell, Table, TableBody } from '../shared/DataTable';
 import { StatusBadge, UnitTag } from '../shared/StatusBadge';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-
-interface Ingredient {
-    id: number;
-    name: string;
-    unit: string;
-    stock: number;
-    min: number;
-    status: 'good' | 'warn' | 'low';
-}
+import { AddIngredientModal, StockInModal, type Ingredient } from './IngredientModals';
 
 const initialIngredients: Ingredient[] = [
     { id: 1, name: 'Tomato', unit: 'kg', stock: 20, min: 5, status: 'good' },
@@ -28,12 +16,29 @@ const initialIngredients: Ingredient[] = [
 ];
 
 export function IngredientsView() {
-    const [ingredients] = useState<Ingredient[]>(initialIngredients);
+    const [ingredients, setIngredients] = useState<Ingredient[]>(initialIngredients);
     const [search, setSearch] = useState('');
     const [filterStatus, setFilterStatus] = useState('all');
 
     const [isAddOpen, setIsAddOpen] = useState(false);
     const [isStockInOpen, setIsStockInOpen] = useState(false);
+
+    const handleAdd = (newIng: Omit<Ingredient, 'id'>) => {
+        setIngredients([...ingredients, { ...newIng, id: Date.now() }]);
+    };
+
+    const handleStockIn = (id: number, quantity: number, _note: string) => {
+        setIngredients(ingredients.map(ing => {
+            if (ing.id !== id) return ing;
+            const newStock = ing.stock + quantity;
+            let status = ing.status;
+            if (newStock <= ing.min) status = 'low';
+            else if (newStock <= ing.min * 1.5) status = 'warn';
+            else status = 'good';
+
+            return { ...ing, stock: newStock, status };
+        }));
+    };
 
     const filtered = ingredients.filter(i => {
         const matchesSearch = i.name.toLowerCase().includes(search.toLowerCase());
@@ -122,76 +127,18 @@ export function IngredientsView() {
                 </Table>
             </DataTableCard>
 
-            {/* Modals will be similar to Categories, just keeping UI structural for now */}
-            <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-                <DialogContent className="sm:max-w-[500px]">
-                    <DialogHeader><DialogTitle className="font-serif text-xl">Add Ingredient</DialogTitle></DialogHeader>
-                    <div className="grid gap-4 py-4">
-                        <div className="flex flex-col gap-2">
-                            <Label className="text-xs uppercase tracking-wider text-muted-foreground">Ingredient Name</Label>
-                            <Input placeholder="e.g. Tomato" />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="flex flex-col gap-2">
-                                <Label className="text-xs uppercase tracking-wider text-muted-foreground">Unit</Label>
-                                <Select defaultValue="kg">
-                                    <SelectTrigger><SelectValue /></SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="kg">kg</SelectItem>
-                                        <SelectItem value="gram">gram</SelectItem>
-                                        <SelectItem value="piece">piece</SelectItem>
-                                        <SelectItem value="liter">liter</SelectItem>
-                                        <SelectItem value="ml">ml</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="flex flex-col gap-2">
-                                <Label className="text-xs uppercase tracking-wider text-muted-foreground">Current Stock</Label>
-                                <Input type="number" placeholder="0" step="0.1" />
-                            </div>
-                        </div>
-                        <div className="flex flex-col gap-2">
-                            <Label className="text-xs uppercase tracking-wider text-muted-foreground">Minimum Stock Alert</Label>
-                            <Input type="number" placeholder="0" step="0.1" />
-                            <p className="text-[11px] text-muted-foreground mt-1">System will alert when stock drops below this value</p>
-                        </div>
-                    </div>
-                    <DialogFooter>
-                        <Button variant="secondary" onClick={() => setIsAddOpen(false)}>Cancel</Button>
-                        <Button className="bg-amber-500 text-amber-950 hover:bg-amber-500/90">Add Ingredient</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+            <AddIngredientModal
+                open={isAddOpen}
+                onOpenChange={setIsAddOpen}
+                onAdd={handleAdd}
+            />
 
-            <Dialog open={isStockInOpen} onOpenChange={setIsStockInOpen}>
-                <DialogContent className="sm:max-w-[425px]">
-                    <DialogHeader><DialogTitle className="font-serif text-xl">Manual Stock In</DialogTitle></DialogHeader>
-                    <div className="grid gap-4 py-4">
-                        <div className="flex flex-col gap-2">
-                            <Label className="text-xs uppercase tracking-wider text-muted-foreground">Ingredient</Label>
-                            <Select>
-                                <SelectTrigger><SelectValue placeholder="Select ingredient..." /></SelectTrigger>
-                                <SelectContent>
-                                    {ingredients.map(i => <SelectItem key={i.id} value={i.id.toString()}>{i.name} ({i.stock} {i.unit})</SelectItem>)}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="flex flex-col gap-2">
-                            <Label className="text-xs uppercase tracking-wider text-muted-foreground">Quantity to Add</Label>
-                            <Input type="number" placeholder="0" step="0.1" />
-                        </div>
-                        <div className="flex flex-col gap-2">
-                            <Label className="text-xs uppercase tracking-wider text-muted-foreground">Note (optional)</Label>
-                            <Input type="text" placeholder="e.g. Supplier delivery" />
-                        </div>
-                    </div>
-                    <DialogFooter>
-                        <Button variant="secondary" onClick={() => setIsStockInOpen(false)}>Cancel</Button>
-                        <Button className="bg-amber-500 text-amber-950 hover:bg-amber-500/90">Add Stock</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-
+            <StockInModal
+                open={isStockInOpen}
+                onOpenChange={setIsStockInOpen}
+                ingredients={ingredients}
+                onStockIn={handleStockIn}
+            />
         </div>
     );
 }

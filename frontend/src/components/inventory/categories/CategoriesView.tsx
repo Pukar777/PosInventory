@@ -4,16 +4,7 @@ import { PageHeader } from '../shared/PageHeader';
 import { DataTableCard, DataTableHeader, DataTableHead, DataTableRow, DataTableCell, Table, TableBody } from '../shared/DataTable';
 import { CatPill } from '../shared/StatusBadge';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-
-interface Category {
-    id: number;
-    name: string;
-    itemCount: number;
-    created: string;
-}
+import { AddCategoryModal, EditCategoryModal, type Category } from './CategoryModals';
 
 const initialCategories: Category[] = [
     { id: 1, name: 'Main Course', itemCount: 4, created: '2025-01-10' },
@@ -28,25 +19,18 @@ export function CategoriesView() {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editCat, setEditCat] = useState<Category | null>(null);
 
-    const [newName, setNewName] = useState('');
-
-    const handleAdd = () => {
-        if (!newName.trim()) return;
+    const handleAdd = (name: string) => {
         setCategories([...categories, {
             id: Date.now(),
-            name: newName,
+            name: name,
             itemCount: 0,
             created: new Date().toISOString().split('T')[0]
         }]);
-        setNewName('');
-        setIsAddModalOpen(false);
     };
 
-    const handleEdit = () => {
-        if (!editCat || !editCat.name.trim()) return;
-        setCategories(categories.map(c => c.id === editCat.id ? editCat : c));
+    const handleEdit = (id: number, name: string) => {
+        setCategories(categories.map(c => c.id === id ? { ...c, name } : c));
         setEditCat(null);
-        setIsEditModalOpen(false);
     };
 
     const handleDelete = (id: number) => {
@@ -98,52 +82,21 @@ export function CategoriesView() {
                 </Table>
             </DataTableCard>
 
-            {/* Add Modal */}
-            <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-                <DialogContent className="sm:max-w-[425px]">
-                    <DialogHeader>
-                        <DialogTitle className="font-serif text-xl">Add Category</DialogTitle>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                        <div className="flex flex-col gap-2">
-                            <Label htmlFor="name" className="text-xs uppercase tracking-wider text-muted-foreground">Category Name</Label>
-                            <Input
-                                id="name"
-                                value={newName}
-                                onChange={(e) => setNewName(e.target.value)}
-                                placeholder="e.g. Main Course"
-                            />
-                        </div>
-                    </div>
-                    <DialogFooter>
-                        <Button variant="secondary" onClick={() => setIsAddModalOpen(false)}>Cancel</Button>
-                        <Button className="bg-amber-500 text-amber-950 hover:bg-amber-500/90" onClick={handleAdd}>Save Category</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+            <AddCategoryModal
+                open={isAddModalOpen}
+                onOpenChange={setIsAddModalOpen}
+                onAdd={handleAdd}
+            />
 
-            {/* Edit Modal */}
-            <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-                <DialogContent className="sm:max-w-[425px]">
-                    <DialogHeader>
-                        <DialogTitle className="font-serif text-xl">Edit Category</DialogTitle>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                        <div className="flex flex-col gap-2">
-                            <Label htmlFor="edit-name" className="text-xs uppercase tracking-wider text-muted-foreground">Category Name</Label>
-                            <Input
-                                id="edit-name"
-                                value={editCat?.name || ''}
-                                onChange={(e) => setEditCat(prev => prev ? { ...prev, name: e.target.value } : null)}
-                            />
-                        </div>
-                    </div>
-                    <DialogFooter>
-                        <Button variant="secondary" onClick={() => setIsEditModalOpen(false)}>Cancel</Button>
-                        <Button className="bg-amber-500 text-amber-950 hover:bg-amber-500/90" onClick={handleEdit}>Update</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+            <EditCategoryModal
+                open={isEditModalOpen}
+                onOpenChange={(open) => {
+                    setIsEditModalOpen(open);
+                    if (!open) setEditCat(null);
+                }}
+                category={editCat}
+                onEdit={handleEdit}
+            />
         </div>
     );
 }

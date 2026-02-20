@@ -5,20 +5,7 @@ import { TableToolbar } from '../shared/TableToolbar';
 import { DataTableCard, DataTableHeader, DataTableHead, DataTableRow, DataTableCell, Table, TableBody } from '../shared/DataTable';
 import { CatPill, ImageThumb } from '../shared/StatusBadge';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-
-interface MenuItem {
-    id: number;
-    name: string;
-    catId: number;
-    catName: string;
-    price: number;
-    emoji: string;
-    recipeCount: number;
-}
+import { AddMenuItemModal, type MenuItem } from './MenuItemModals';
 
 const initialMenuItems: MenuItem[] = [
     { id: 1, name: 'Burger', catId: 1, catName: 'Main Course', price: 12.50, emoji: '🍔', recipeCount: 3 },
@@ -32,11 +19,15 @@ const initialMenuItems: MenuItem[] = [
 ];
 
 export function MenuItemsView() {
-    const [items] = useState<MenuItem[]>(initialMenuItems);
+    const [items, setItems] = useState<MenuItem[]>(initialMenuItems);
     const [search, setSearch] = useState('');
     const [filterCat, setFilterCat] = useState('all');
 
     const [isAddOpen, setIsAddOpen] = useState(false);
+
+    const handleAdd = (newItem: Omit<MenuItem, 'id' | 'recipeCount'>) => {
+        setItems([{ ...newItem, id: Date.now(), recipeCount: 0 }, ...items]);
+    };
 
     const filtered = items.filter(i => {
         const matchesSearch = i.name.toLowerCase().includes(search.toLowerCase());
@@ -114,43 +105,11 @@ export function MenuItemsView() {
                 </Table>
             </DataTableCard>
 
-            {/* Add Modal */}
-            <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-                <DialogContent className="sm:max-w-[425px]">
-                    <DialogHeader><DialogTitle className="font-serif text-xl">Add Menu Item</DialogTitle></DialogHeader>
-                    <div className="grid gap-4 py-4">
-                        <div className="flex flex-col gap-2">
-                            <Label className="text-xs uppercase tracking-wider text-muted-foreground">Item Name</Label>
-                            <Input placeholder="e.g. Grilled Salmon" />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="flex flex-col gap-2">
-                                <Label className="text-xs uppercase tracking-wider text-muted-foreground">Category</Label>
-                                <Select>
-                                    <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="1">Main Course</SelectItem>
-                                        <SelectItem value="2">Drinks</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="flex flex-col gap-2">
-                                <Label className="text-xs uppercase tracking-wider text-muted-foreground">Price ($)</Label>
-                                <Input type="number" placeholder="0.00" step="0.01" />
-                            </div>
-                        </div>
-                        <div className="flex flex-col gap-2">
-                            <Label className="text-xs uppercase tracking-wider text-muted-foreground">Emoji / Image</Label>
-                            <Input type="text" placeholder="🍕" maxLength={4} />
-                            <p className="text-[11px] text-muted-foreground mt-1">Enter an emoji to represent this item</p>
-                        </div>
-                    </div>
-                    <DialogFooter>
-                        <Button variant="secondary" onClick={() => setIsAddOpen(false)}>Cancel</Button>
-                        <Button className="bg-amber-500 text-amber-950 hover:bg-amber-500/90">Add Item</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+            <AddMenuItemModal
+                open={isAddOpen}
+                onOpenChange={setIsAddOpen}
+                onAdd={handleAdd}
+            />
         </div>
     );
 }
