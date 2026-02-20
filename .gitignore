@@ -15,6 +15,7 @@ Thumbs.db
 node_modules/
 dist/
 build/
+dev-dist/
 .env
 .env*.local
 npm-debug.log*
