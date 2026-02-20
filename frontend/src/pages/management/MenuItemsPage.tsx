@@ -1,0 +1,11 @@
+import { MenuItemsView } from '@/components/inventory';
+
+export default function MenuItemsPage() {
+    return (
+        <div className="p-6 h-full flex flex-col">
+            <div className="flex-1 w-full">
+                <MenuItemsView />
+            </div>
+        </div>
+    );
+}
