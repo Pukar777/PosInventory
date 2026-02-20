@@ -1,24 +1,47 @@
-import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useAuth } from "@/context/AuthContext"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { z } from "zod"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+
+const loginSchema = z.object({
+    email: z.string().min(1, "Email is required").email("Invalid email address"),
+    password: z.string().min(6, "Password must be at least 6 characters"),
+})
+
+type LoginFormValues = z.infer<typeof loginSchema>
 
 export default function LoginPage() {
     const { login } = useAuth()
     const navigate = useNavigate()
-    const [email, setEmail] = useState("")
-    const [password, setPassword] = useState("")
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault()
+    const form = useForm<LoginFormValues>({
+        resolver: zodResolver(loginSchema),
+        defaultValues: {
+            email: "",
+            password: "",
+        },
+    })
+    const { register, handleSubmit, formState: { errors } } = form
+
+    const onSubmit = async (data: LoginFormValues) => {
         try {
-            await login({ email, password })
+            await login({ email: data.email, password: data.password })
             navigate("/")
-        } catch (error) {
+        } catch (error: any) {
             console.error("Login failed", error)
+            const responseData = error.response?.data;
+            if (responseData?.errors) {
+                Object.keys(responseData.errors).forEach((key) => {
+                    form.setError(key as any, { message: responseData.errors[key][0] });
+                });
+            } else {
+                form.setError("root", { message: responseData?.message || "Invalid email or password. Please try again." })
+            }
         }
     }
 
@@ -41,16 +64,23 @@ export default function LoginPage() {
                     <CardTitle className="text-center text-2xl font-semibold tracking-tight">Login</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <form onSubmit={handleSubmit}>
+                    <form onSubmit={handleSubmit(onSubmit)} id="login-form">
                         <div className="grid w-full items-center gap-4">
                             <div className="flex flex-col space-y-1.5">
                                 <Label htmlFor="email" className="sr-only">Email</Label>
-                                <Input id="email" placeholder="Email" value={email} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)} className="bg-background/50" />
+                                <Input id="email" placeholder="Email" {...register("email")} className="bg-background/50" />
+                                {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
                             </div>
                             <div className="flex flex-col space-y-1.5">
                                 <Label htmlFor="password" className="sr-only">Password</Label>
-                                <Input id="password" type="password" placeholder="Password" value={password} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)} className="bg-background/50" />
+                                <Input id="password" type="password" placeholder="Password" {...register("password")} className="bg-background/50" />
+                                {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
                             </div>
+                            {errors.root && (
+                                <div className="text-sm font-medium text-destructive mt-2 text-center">
+                                    {errors.root.message}
+                                </div>
+                            )}
                         </div>
                     </form>
                 </CardContent>
@@ -58,7 +88,7 @@ export default function LoginPage() {
                     <div className="w-full flex justify-start pl-1">
                         <a href="#" className="text-sm text-primary hover:underline transition-colors">Forgot Password?</a>
                     </div>
-                    <Button type="submit" onClick={handleSubmit} className="w-full shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all font-semibold">Login</Button>
+                    <Button form="login-form" type="submit" className="w-full shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all font-semibold">Login</Button>
                 </CardFooter>
             </Card>
         </div>
