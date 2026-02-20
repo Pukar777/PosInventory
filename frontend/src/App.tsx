@@ -17,17 +17,24 @@ function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode,
 }
 
 function Dashboard() {
-  const { user, logout } = useAuth()
+  const { user } = useAuth()
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background flex-col gap-4 relative overflow-hidden">
+    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-12rem)] relative rounded-2xl overflow-hidden border border-border/20 bg-card/30">
       {/* Ambient Effects */}
-      <div className="absolute top-0 right-0 w-[40rem] h-[40rem] bg-primary/10 rounded-full blur-[120px] mix-blend-screen pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-[35rem] h-[35rem] bg-accent/20 rounded-full blur-[100px] mix-blend-screen pointer-events-none" />
+      <div className="absolute top-0 right-0 w-[30rem] h-[30rem] bg-primary/10 rounded-full blur-[100px] mix-blend-screen pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-[25rem] h-[25rem] bg-accent/20 rounded-full blur-[80px] mix-blend-screen pointer-events-none" />
 
-      <div className="rounded-xl border border-border/50 bg-card/70 backdrop-blur-xl p-8 shadow-2xl text-center relative z-10 w-full max-w-md">
-        <h1 className="text-3xl font-bold font-mono tracking-tight text-primary mb-4">Welcome, <span className="text-foreground">{user?.name || 'Admin'}</span>!</h1>
-        <p className="mt-2 text-muted-foreground mb-8 text-sm">You have successfully logged in.</p>
-        <button onClick={logout} className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">Logout</button>
+      <div className="rounded-xl border border-border/50 bg-card/70 backdrop-blur-xl p-10 shadow-2xl text-center relative z-10 w-full max-w-lg mx-4">
+        <h1 className="text-4xl font-bold tracking-tight mb-4">
+          <span
+            className="bg-clip-text text-transparent bg-gradient-to-r from-primary to-amber-200 drop-shadow-md pb-2 inline-block"
+            style={{ fontFamily: "'Dancing Script', 'Pacifico', cursive" }}
+          >
+            {import.meta.env.VITE_APP_NAME || 'Digital Waiter!'}
+          </span>
+        </h1>
+        <h2 className="text-2xl font-semibold mb-2">Welcome, <span className="text-primary">{user?.name || 'Admin'}</span>!</h2>
+        <p className="text-muted-foreground">Select an option from the sidebar to manage your inventory.</p>
       </div>
     </div>
   )
