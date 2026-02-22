@@ -263,3 +263,64 @@ export function EditMenuItemModal({ open, onOpenChange, categories, menuItem, on
         </Dialog>
     );
 }
+
+interface LinkedIngredientsModalProps {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    menuItem: MenuItem | null;
+}
+
+export function LinkedIngredientsModal({ open, onOpenChange, menuItem }: LinkedIngredientsModalProps) {
+    if (!menuItem) return null;
+
+    const ingredients = menuItem.ingredients || [];
+
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                    <DialogTitle className="font-serif text-xl">Recipe Ingredients</DialogTitle>
+                </DialogHeader>
+                <div className="py-4">
+                    <p className="text-sm text-muted-foreground mb-4">
+                        Ingredients required for <span className="font-semibold text-foreground">{menuItem.name}</span>:
+                    </p>
+                    {ingredients.length === 0 ? (
+                        <div className="text-center text-sm text-muted-foreground italic py-6">
+                            No ingredients linked to this menu item.
+                        </div>
+                    ) : (
+                        <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
+                            {ingredients.map((ing) => {
+                                const required = Number(ing.pivot?.quantity_required) || 0;
+                                const stock = Number(ing.current_stock) || 0;
+                                const isAvailable = stock >= required;
+                                const isLowAlert = stock <= Number(ing.minimum_stock);
+
+                                return (
+                                    <div key={ing.id} className="flex flex-col p-3 rounded-lg border border-border/50 bg-secondary/20">
+                                        <div className="flex items-center justify-between">
+                                            <span className="font-medium text-sm">{ing.name}</span>
+                                            <span className="text-xs text-muted-foreground bg-secondary/50 px-2 py-1 rounded-full">
+                                                Requires: {required} {ing.unit}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between items-center mt-2">
+                                            <span className="text-xs text-muted-foreground">Current Stock:</span>
+                                            <span className={`text-xs font-semibold ${!isAvailable ? 'text-red-500' : isLowAlert ? 'text-amber-500' : 'text-green-500'}`}>
+                                                {stock} {ing.unit} {!isAvailable ? '(Insufficient)' : ''}
+                                            </span>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+                <DialogFooter>
+                    <Button variant="secondary" onClick={() => onOpenChange(false)}>Close</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}

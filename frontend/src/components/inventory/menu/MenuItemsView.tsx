@@ -1,11 +1,11 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Plus, Edit2, Trash2, CheckCircle2, XCircle } from 'lucide-react';
+import { Plus, Edit2, Trash2, CheckCircle2, XCircle, List } from 'lucide-react';
 import { PageHeader } from '../shared/PageHeader';
 import { TableToolbar } from '../shared/TableToolbar';
 import { DataTableCard, DataTableHeader, DataTableHead, DataTableRow, DataTableCell, Table, TableBody } from '../shared/DataTable';
 import { CatPill, ImageThumb } from '../shared/StatusBadge';
 import { Button } from '@/components/ui/button';
-import { AddMenuItemModal, EditMenuItemModal, type MenuItem, type Category } from './MenuItemModals';
+import { AddMenuItemModal, EditMenuItemModal, LinkedIngredientsModal, type MenuItem, type Category } from './MenuItemModals';
 import { useApi } from '@/hooks/useApi';
 import { useSettingsStore } from '@/store/settingsStore';
 import { toast } from 'sonner';
@@ -23,6 +23,7 @@ export function MenuItemsView() {
 
     const [isAddOpen, setIsAddOpen] = useState(false);
     const [isEditOpen, setIsEditOpen] = useState(false);
+    const [isIngredientsOpen, setIsIngredientsOpen] = useState(false);
     const [editItem, setEditItem] = useState<MenuItem | null>(null);
 
     const fetchData = async () => {
@@ -211,6 +212,9 @@ export function MenuItemsView() {
                                             })()}
                                         </DataTableCell>
                                         <DataTableCell className="text-right space-x-2">
+                                            <Button variant="outline" size="sm" onClick={() => { setEditItem(item); setIsIngredientsOpen(true); }}>
+                                                <List className="w-3.5 h-3.5 mr-1" /> Ingredients
+                                            </Button>
                                             <Button variant="secondary" size="sm" onClick={() => { setEditItem(item); setIsEditOpen(true); }}>
                                                 <Edit2 className="w-3.5 h-3.5 mr-1" /> Edit
                                             </Button>
@@ -242,6 +246,15 @@ export function MenuItemsView() {
                 categories={categories}
                 menuItem={editItem}
                 onEdit={handleEdit}
+            />
+
+            <LinkedIngredientsModal
+                open={isIngredientsOpen}
+                onOpenChange={(open) => {
+                    setIsIngredientsOpen(open);
+                    if (!open) setEditItem(null);
+                }}
+                menuItem={editItem}
             />
         </div>
     );

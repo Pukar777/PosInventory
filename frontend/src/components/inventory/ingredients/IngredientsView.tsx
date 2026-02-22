@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2 } from 'lucide-react';
+import { Plus, Edit2, Trash2, List } from 'lucide-react';
 import { PageHeader } from '../shared/PageHeader';
 import { TableToolbar } from '../shared/TableToolbar';
 import { DataTableCard, DataTableHeader, DataTableHead, DataTableRow, DataTableCell, Table, TableBody } from '../shared/DataTable';
 import { StatusBadge, UnitTag } from '../shared/StatusBadge';
 import { Button } from '@/components/ui/button';
-import { AddIngredientModal, StockInModal, EditIngredientModal, type Ingredient } from './IngredientModals';
+import { AddIngredientModal, StockInModal, EditIngredientModal, LinkedItemsModal, type Ingredient } from './IngredientModals';
 import { useApi } from '@/hooks/useApi';
 import { toast } from 'sonner';
 import { useInventoryStore } from '@/store/inventoryStore';
@@ -18,6 +18,7 @@ export function IngredientsView() {
     const [isAddOpen, setIsAddOpen] = useState(false);
     const [isStockInOpen, setIsStockInOpen] = useState(false);
     const [isEditOpen, setIsEditOpen] = useState(false);
+    const [isLinkedItemsOpen, setIsLinkedItemsOpen] = useState(false);
     const [editingIngredient, setEditingIngredient] = useState<Ingredient | null>(null);
 
     const { request } = useApi();
@@ -173,6 +174,12 @@ export function IngredientsView() {
                                             />
                                         </DataTableCell>
                                         <DataTableCell className="text-right space-x-2">
+                                            <Button variant="outline" size="sm" onClick={() => {
+                                                setEditingIngredient(ing);
+                                                setIsLinkedItemsOpen(true);
+                                            }}>
+                                                <List className="w-3.5 h-3.5 mr-1" /> Items
+                                            </Button>
                                             <Button variant="secondary" size="sm" onClick={() => {
                                                 setEditingIngredient(ing);
                                                 setIsEditOpen(true);
@@ -209,6 +216,12 @@ export function IngredientsView() {
                 onOpenChange={setIsEditOpen}
                 ingredient={editingIngredient}
                 onEdit={handleEdit}
+            />
+
+            <LinkedItemsModal
+                open={isLinkedItemsOpen}
+                onOpenChange={setIsLinkedItemsOpen}
+                ingredient={editingIngredient}
             />
         </div>
     );

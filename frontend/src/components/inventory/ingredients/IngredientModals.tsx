@@ -12,6 +12,7 @@ export interface Ingredient {
     current_stock: number;
     minimum_stock: number;
     status: 'good' | 'warn' | 'low';
+    menu_items?: { id: number; name: string; pivot: { quantity_required: number } }[];
 }
 
 interface AddIngredientModalProps {
@@ -241,6 +242,52 @@ export function StockInModal({ open, onOpenChange, ingredients, onStockIn }: Sto
                 <DialogFooter>
                     <Button variant="secondary" onClick={() => onOpenChange(false)}>Cancel</Button>
                     <Button className="bg-amber-500 text-amber-950 hover:bg-amber-500/90" onClick={handleStockIn}>Add Stock</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
+interface LinkedItemsModalProps {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    ingredient: Ingredient | null;
+}
+
+export function LinkedItemsModal({ open, onOpenChange, ingredient }: LinkedItemsModalProps) {
+    if (!ingredient) return null;
+
+    const items = ingredient.menu_items || [];
+
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                    <DialogTitle className="font-serif text-xl">Linked Menu Items</DialogTitle>
+                </DialogHeader>
+                <div className="py-4">
+                    <p className="text-sm text-muted-foreground mb-4">
+                        Menu items that use <span className="font-semibold text-foreground">{ingredient.name}</span>:
+                    </p>
+                    {items.length === 0 ? (
+                        <div className="text-center text-sm text-muted-foreground italic py-6">
+                            No menu items linked to this ingredient.
+                        </div>
+                    ) : (
+                        <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
+                            {items.map((item) => (
+                                <div key={item.id} className="flex items-center justify-between p-3 rounded-lg border border-border/50 bg-secondary/20">
+                                    <span className="font-medium text-sm">{item.name}</span>
+                                    <span className="text-xs text-muted-foreground bg-secondary/50 px-2 py-1 rounded-full">
+                                        Requires: {item.pivot?.quantity_required} {ingredient.unit}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+                <DialogFooter>
+                    <Button variant="secondary" onClick={() => onOpenChange(false)}>Close</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
