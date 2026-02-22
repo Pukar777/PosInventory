@@ -18,9 +18,54 @@ class OrderController extends Controller
      */
     public function index(Request $request)
     {
-        $orders = Order::with(['table', 'orderItems.menuItem', 'user'])
-            ->latest()
-            ->get();
+        $query = Order::with(['table', 'orderItems.menuItem', 'user'])->latest();
+
+        if ($request->has('time_filter')) {
+            $filter = $request->input('time_filter');
+            $now = now();
+
+            $query->where(function ($q) use ($filter, $now) {
+                $q->whereIn('status', ['pending', 'preparing']);
+
+                switch ($filter) {
+                    case '15mins':
+                        $q->orWhere('created_at', '>=', $now->copy()->subMinutes(15));
+                        break;
+                    case '30mins':
+                        $q->orWhere('created_at', '>=', $now->copy()->subMinutes(30));
+                        break;
+                    case '45mins':
+                        $q->orWhere('created_at', '>=', $now->copy()->subMinutes(45));
+                        break;
+                    case '60mins':
+                        $q->orWhere('created_at', '>=', $now->copy()->subMinutes(60));
+                        break;
+                    case '120mins':
+                        $q->orWhere('created_at', '>=', $now->copy()->subMinutes(120));
+                        break;
+                    case '3hrs':
+                        $q->orWhere('created_at', '>=', $now->copy()->subHours(3));
+                        break;
+                    case '5hrs':
+                        $q->orWhere('created_at', '>=', $now->copy()->subHours(5));
+                        break;
+                    case '8hrs':
+                        $q->orWhere('created_at', '>=', $now->copy()->subHours(8));
+                        break;
+                    case '10hrs':
+                        $q->orWhere('created_at', '>=', $now->copy()->subHours(10));
+                        break;
+                    case 'Today':
+                        $q->orWhereDate('created_at', $now->toDateString());
+                        break;
+                    case 'Week':
+                        $q->orWhere('created_at', '>=', $now->copy()->subDays(7));
+                        break;
+                }
+            });
+        }
+
+        $orders = $query->get();
 
         return response()->json($orders);
     }

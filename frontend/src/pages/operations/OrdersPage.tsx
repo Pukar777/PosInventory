@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
-import { RefreshCw, Clock, ChefHat, Truck, XCircle } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { RefreshCw, Clock, ChefHat, Truck, XCircle, Plus, AlertOctagon } from 'lucide-react'
 import {
     Table,
     TableBody,
@@ -73,6 +74,7 @@ function StatusBadge({ status }: { status: OrderStatus }) {
     )
 }
 
+type TimeFilter = '15mins' | '30mins' | '45mins' | '60mins' | '120mins' | '3hrs' | '5hrs' | '8hrs' | '10hrs' | 'Today' | 'Week'
 export default function OrdersPage() {
     const [orders, setOrders] = useState<Order[]>([])
     const [isLoading, setIsLoading] = useState(true)
@@ -80,18 +82,44 @@ export default function OrdersPage() {
     const { request } = useApi()
     const { getSettingValue } = useSettingsStore()
     const currency = getSettingValue('currency_symbol', '$')
+    const defaultTimeFilter = (getSettingValue('default_time_filter', '30mins') as TimeFilter)
+    const [timeFilter, setTimeFilter] = useState<TimeFilter>(defaultTimeFilter)
+
+    useEffect(() => {
+        setTimeFilter(defaultTimeFilter)
+    }, [defaultTimeFilter])
+    const getElapsedMinutes = useCallback((dateStr: string) => {
+        const createdTime = new Date(dateStr).getTime()
+        const now = new Date().getTime()
+        return Math.floor((now - createdTime) / 60000)
+    }, [])
+
+    const getCriticalMinutes = (filter: string) => {
+        if (filter.endsWith('mins')) return parseInt(filter);
+        if (filter.endsWith('hrs')) return parseInt(filter) * 60;
+        if (filter === 'Today') return 24 * 60;
+        if (filter === 'Week') return 7 * 24 * 60;
+        return 30;
+    }
+    const criticalMinutes = getCriticalMinutes(timeFilter)
+    const criticalOrders = orders.filter(o =>
+        (o.status === 'pending' || o.status === 'preparing') &&
+        getElapsedMinutes(o.created_at) >= criticalMinutes
+    ).sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+
+    const regularOrders = orders.filter(o => !criticalOrders.some(co => co.id === o.id))
 
     const fetchOrders = useCallback(async () => {
         try {
             setIsLoading(true)
-            const res = await request<Order[]>({ url: '/orders', method: 'GET' })
+            const res = await request<Order[]>({ url: `/orders?time_filter=${timeFilter}`, method: 'GET' })
             setOrders(res.data)
         } catch {
             toast.error('Failed to load orders')
         } finally {
             setIsLoading(false)
         }
-    }, [])
+    }, [timeFilter, request])
 
     useEffect(() => {
         fetchOrders()
@@ -143,10 +171,32 @@ export default function OrdersPage() {
                     <h1 className="text-3xl font-bold font-mono tracking-tight text-primary">Orders</h1>
                     <p className="text-muted-foreground mt-1 text-sm">Live order management — auto-refreshes every 30s.</p>
                 </div>
-                <Button variant="outline" onClick={fetchOrders} className="gap-2 sm:w-auto w-full">
-                    <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-                    Refresh
-                </Button>
+                <div className="flex flex-col sm:flex-row gap-2">
+                    <Select value={timeFilter} onValueChange={(val) => setTimeFilter(val as TimeFilter)}>
+                        <SelectTrigger className="w-full sm:w-[130px]">
+                            <Clock className="w-4 h-4 mr-2" />
+                            <SelectValue placeholder="Time filter" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="15mins">15 Minutes</SelectItem>
+                            <SelectItem value="30mins">30 Minutes</SelectItem>
+                            <SelectItem value="45mins">45 Minutes</SelectItem>
+                            <SelectItem value="60mins">1 Hour</SelectItem>
+                            <SelectItem value="120mins">2 Hours</SelectItem>
+                            <SelectItem value="Today">Today</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <Button variant="outline" onClick={fetchOrders} className="gap-2 w-full sm:w-auto">
+                        <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+                        Refresh
+                    </Button>
+                    <Button asChild className="gap-2 w-full sm:w-auto">
+                        <Link to="/operations/new-order">
+                            <Plus className="w-4 h-4" />
+                            New Order
+                        </Link>
+                    </Button>
+                </div>
             </div>
 
             {/* Stats */}
@@ -163,6 +213,69 @@ export default function OrdersPage() {
                     )
                 })}
             </div>
+
+            {/* Critical Orders Section */}
+            {criticalOrders.length > 0 && (
+                <div className="rounded-xl border border-destructive/50 bg-destructive/5 overflow-hidden shadow-sm overflow-x-auto mb-6">
+                    <div className="bg-destructive/10 px-4 py-3 border-b border-destructive/20 flex items-center gap-2">
+                        <AlertOctagon className="w-5 h-5 text-destructive" />
+                        <h2 className="font-bold text-destructive">Critical Orders — Action Required</h2>
+                    </div>
+                    <Table className="min-w-[700px]">
+                        <TableHeader>
+                            <TableRow className="hover:bg-transparent border-destructive/20">
+                                <TableHead className="w-16">#</TableHead>
+                                <TableHead>Table</TableHead>
+                                <TableHead>Items</TableHead>
+                                <TableHead>Waiter</TableHead>
+                                <TableHead>Total</TableHead>
+                                <TableHead>Time (Elapsed)</TableHead>
+                                <TableHead>Status</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {criticalOrders.map((order) => (
+                                <TableRow key={`critical-${order.id}`} className="bg-destructive/5 hover:bg-destructive/10 border-destructive/10">
+                                    <TableCell className="font-mono text-destructive text-xs">#{order.id}</TableCell>
+                                    <TableCell className="font-bold text-destructive">Table {order.table?.number ?? '—'}</TableCell>
+                                    <TableCell className="text-xs text-destructive/80 max-w-[200px]">
+                                        {order.order_items?.map((i) => (
+                                            <span key={i.id} className="block truncate">
+                                                {i.quantity}× {i.menu_item?.name}
+                                            </span>
+                                        ))}
+                                    </TableCell>
+                                    <TableCell className="text-sm text-destructive">{order.user?.name ?? 'QR'}</TableCell>
+                                    <TableCell className="font-semibold text-destructive">
+                                        {currency}{Number(order.total_amount).toFixed(2)}
+                                    </TableCell>
+                                    <TableCell className="text-xs text-destructive">
+                                        <span className="font-bold">{getElapsedMinutes(order.created_at)} mins ago</span><br />
+                                        <span>{formatTime(order.created_at)}</span>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Select
+                                            value={order.status}
+                                            onValueChange={(val) => handleStatusChange(order.id, val)}
+                                            disabled={updatingId === order.id}
+                                        >
+                                            <SelectTrigger className="h-8 w-32 text-xs border-destructive/30">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="pending">Pending</SelectItem>
+                                                <SelectItem value="preparing">Preparing</SelectItem>
+                                                <SelectItem value="delivered">Delivered</SelectItem>
+                                                <SelectItem value="cancelled">Cancelled</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </div>
+            )}
 
             {/* Table */}
             <div className="rounded-xl border border-border/50 bg-card/50 backdrop-blur-xl overflow-hidden shadow-sm overflow-x-auto">
@@ -185,14 +298,14 @@ export default function OrdersPage() {
                                     Loading orders...
                                 </TableCell>
                             </TableRow>
-                        ) : orders.length === 0 ? (
+                        ) : regularOrders.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={7} className="text-center h-24 text-muted-foreground">
-                                    No orders yet today.
+                                    No regular orders.
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            orders.map((order) => (
+                            regularOrders.map((order) => (
                                 <TableRow key={order.id} className={order.status === 'cancelled' ? 'opacity-50' : ''}>
                                     <TableCell className="font-mono text-muted-foreground text-xs">#{order.id}</TableCell>
                                     <TableCell className="font-bold">Table {order.table?.number ?? '—'}</TableCell>
