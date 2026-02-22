@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Plus, Edit2, Trash2, CheckCircle2 } from 'lucide-react';
+import { Plus, Edit2, Trash2, CheckCircle2, XCircle } from 'lucide-react';
 import { PageHeader } from '../shared/PageHeader';
 import { TableToolbar } from '../shared/TableToolbar';
 import { DataTableCard, DataTableHeader, DataTableHead, DataTableRow, DataTableCell, Table, TableBody } from '../shared/DataTable';
@@ -190,13 +190,25 @@ export function MenuItemsView() {
                                         <DataTableCell><CatPill label={item.category?.name || 'Unknown'} /></DataTableCell>
                                         <DataTableCell className="font-mono text-[14px] text-cream">{currency}{Number(item.price).toFixed(2)}</DataTableCell>
                                         <DataTableCell>
-                                            {(item.ingredients && item.ingredients.length > 0) ? (
-                                                <span className="flex items-center text-green-500 text-xs gap-1">
-                                                    <CheckCircle2 className="w-3.5 h-3.5" /> {item.ingredients.length} ingredients
-                                                </span>
-                                            ) : (
-                                                <span className="text-muted-foreground text-xs italic">No recipe</span>
-                                            )}
+                                            {(() => {
+                                                if (item.ingredients && item.ingredients.length > 0) {
+                                                    const isAvailable = item.ingredients.every(ing => Number(ing.current_stock) >= Number(ing.pivot.quantity_required));
+                                                    if (isAvailable) {
+                                                        return (
+                                                            <span className="flex items-center text-green-500 text-xs gap-1" title="Ingredients available">
+                                                                <CheckCircle2 className="w-3.5 h-3.5" /> {item.ingredients.length} ingredients
+                                                            </span>
+                                                        );
+                                                    } else {
+                                                        return (
+                                                            <span className="flex items-center text-red-500 text-xs gap-1" title="Ingredients missing">
+                                                                <XCircle className="w-3.5 h-3.5" /> {item.ingredients.length} ingredients
+                                                            </span>
+                                                        );
+                                                    }
+                                                }
+                                                return <span className="text-muted-foreground text-xs italic">No recipe</span>;
+                                            })()}
                                         </DataTableCell>
                                         <DataTableCell className="text-right space-x-2">
                                             <Button variant="secondary" size="sm" onClick={() => { setEditItem(item); setIsEditOpen(true); }}>

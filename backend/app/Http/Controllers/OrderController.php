@@ -7,6 +7,7 @@ use App\Models\RestaurantTable;
 use App\Services\StockDeductionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Services\ApiResponse;
 
 class OrderController extends Controller
 {
@@ -123,14 +124,15 @@ class OrderController extends Controller
         } catch (\RuntimeException $e) {
             // Stock deduction failed — cancel the order
             $order->update(['status' => 'cancelled']);
-            return response()->json(['message' => $e->getMessage()], 422);
+            return ApiResponse::error($e->getMessage(), 422);
         }
 
         // Mark table as occupied
         RestaurantTable::find($validated['table_id'])->update(['status' => 'occupied']);
 
-        return response()->json(
+        return ApiResponse::success(
             $order->load(['table', 'orderItems.menuItem']),
+            'Order created successfully',
             201
         );
     }

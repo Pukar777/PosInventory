@@ -29,9 +29,7 @@ class StockDeductionService
 
                     if ($lockedIngredient->current_stock < $quantityNeeded) {
                         throw new \RuntimeException(
-                            "Insufficient stock for ingredient: {$lockedIngredient->name}. " .
-                            "Required: {$quantityNeeded} {$lockedIngredient->unit}, " .
-                            "Available: {$lockedIngredient->current_stock} {$lockedIngredient->unit}"
+                            "Insufficient stock for ingredient: {$lockedIngredient->name}"
                         );
                     }
 
