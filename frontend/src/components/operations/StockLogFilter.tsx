@@ -64,7 +64,6 @@ export function StockLogFilter({ onFilterChange }: StockLogFilterProps) {
     const handleFilterChange = (key: keyof StockLogFilterState, value: string) => {
         const newFilters = { ...filters, [key]: value };
         setFilters(newFilters);
-        onFilterChange(newFilters);
     };
 
     const clearFilters = () => {
@@ -78,6 +77,10 @@ export function StockLogFilter({ onFilterChange }: StockLogFilterProps) {
         };
         setFilters(reset);
         onFilterChange(reset);
+    };
+
+    const applyFilters = () => {
+        onFilterChange(filters);
     };
 
     const hasActiveFilters =
@@ -95,11 +98,16 @@ export function StockLogFilter({ onFilterChange }: StockLogFilterProps) {
                     <Filter className="w-4 h-4 text-primary" />
                     Filter Logs
                 </div>
-                {hasActiveFilters && (
-                    <Button variant="ghost" size="sm" onClick={clearFilters} className="h-8 text-xs text-muted-foreground hover:text-foreground">
-                        <X className="w-3 h-3 mr-1" /> Clear All
+                <div className="flex items-center gap-2">
+                    {hasActiveFilters && (
+                        <Button variant="ghost" size="sm" onClick={clearFilters} className="h-8 text-xs text-muted-foreground hover:text-foreground">
+                            <X className="w-3 h-3 mr-1" /> Clear All
+                        </Button>
+                    )}
+                    <Button variant="default" size="sm" onClick={applyFilters} className="h-8 text-xs bg-primary hover:bg-primary/90 text-primary-foreground">
+                        Apply Filters
                     </Button>
-                )}
+                </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">

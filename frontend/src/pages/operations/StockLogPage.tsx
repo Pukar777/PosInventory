@@ -90,8 +90,9 @@ export default function StockLogPage() {
     };
 
     useEffect(() => {
-        fetchLogs(currentPage);
-    }, [currentPage]);
+        fetchLogs(currentPage, activeFilters);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentPage, activeFilters]);
 
     const handlePrevPage = () => {
         if (currentPage > 1) {
