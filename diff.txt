@@ -1,0 +1,425 @@
+﻿diff --git a/backend/routes/api.php b/backend/routes/api.php
+index 8c10897..18a188e 100644
+--- a/backend/routes/api.php
++++ b/backend/routes/api.php
+@@ -18,6 +18,7 @@
+ 
+     // --- Admin-only routes ---
+     Route::middleware('role:admin')->group(function () {
++        Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'index']);
+         Route::get('/settings', [\App\Http\Controllers\SettingController::class, 'index']);
+         Route::post('/settings', [\App\Http\Controllers\SettingController::class, 'update']);
+         Route::apiResource('categories', CategoryController::class);
+diff --git a/frontend/src/components/dashboard/DashboardGrid.tsx b/frontend/src/components/dashboard/DashboardGrid.tsx
+index f5b768f..314f727 100644
+--- a/frontend/src/components/dashboard/DashboardGrid.tsx
++++ b/frontend/src/components/dashboard/DashboardGrid.tsx
+@@ -1,45 +1,132 @@
+ import { Utensils, Archive, ClipboardList, CircleDollarSign } from 'lucide-react';
+ import { StatCard } from './StatCard';
+ import { RecentOrders } from './RecentOrders';
++import type { DashboardOrder } from './RecentOrders';
+ import { LowStockAlerts } from './LowStockAlerts';
++import type { StockAlert } from './LowStockAlerts';
+ import { useSettingsStore } from '@/store/settingsStore';
++import { useEffect, useState } from 'react';
++import { useApi } from '@/hooks/useApi';
++import { useNavigate } from 'react-router-dom';
++
++interface DashboardStats {
++    cards: {
++        menuItems: { total: number; addedThisWeek: number };
++        ingredients: { total: number; lowStock: number };
++        orders: { today: number; growth: number };
++        revenue: { today: number; growth: number };
++    };
++    recentOrders: DashboardOrder[];
++    lowStockAlerts: StockAlert[];
++}
+ 
+ export function DashboardGrid() {
+     const { getSettingValue } = useSettingsStore();
+     const currency = getSettingValue('currency_symbol', '$');
++    const { request } = useApi();
++    const navigate = useNavigate();
++
++    const [stats, setStats] = useState<DashboardStats | null>(null);
++    const [loading, setLoading] = useState(true);
++    const [timeFilter, setTimeFilter] = useState<string>(getSettingValue('default_time_filter', '30mins') as string);
++
++    useEffect(() => {
++        setTimeFilter(getSettingValue('default_time_filter', '30mins') as string);
++    }, [getSettingValue]);
++
++    useEffect(() => {
++        const fetchDashboardData = async () => {
++            try {
++                const response = await request<any, { data: DashboardStats }>({ url: `/dashboard?time_filter=${timeFilter}`, method: 'GET' });
++                setStats(response.data);
++            } catch (error) {
++                console.error('Failed to fetch dashboard data', error);
++            } finally {
++                setLoading(false);
++            }
++        };
++
++        fetchDashboardData();
++    }, [request, timeFilter]);
++
++    if (loading || !stats) {
++        return (
++            <div className="animate-in fade-in space-y-7">
++                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
++                    {[...Array(4)].map((_, i) => <div key={i} className="h-32 rounded-xl bg-muted animate-pulse" />)}
++                </div>
++                <div className="grid grid-cols-1 xl:grid-cols-[1fr_380px] gap-5">
++                    <div className="h-[400px] rounded-xl bg-muted animate-pulse" />
++                    <div className="h-[400px] rounded-xl bg-muted animate-pulse" />
++                </div>
++            </div>
++        );
++    }
+ 
+     return (
+         <div className="animate-in fade-in slide-in-from-bottom-[8px] duration-250">
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-7">
+                 <StatCard
+                     title="Menu Items"
+-                    value="12"
+-                    subtext={<><span className="text-green-500">+2</span> this week</>}
++                    value={stats.cards.menuItems.total.toString()}
++                    subtext={
++                        <>
++                            <span className={stats.cards.menuItems.addedThisWeek > 0 ? "text-green-500" : "text-muted-foreground"}>
++                                +{stats.cards.menuItems.addedThisWeek}
++                            </span> this week
++                        </>
++                    }
+                     icon={Utensils}
+                 />
+                 <StatCard
+                     title="Ingredients"
+-                    value="18"
+-                    subtext={<><span className="text-red-500">3 low stock</span></>}
++                    value={stats.cards.ingredients.total.toString()}
++                    subtext={
++                        stats.cards.ingredients.lowStock > 0 ? (
++                            <><span className="text-red-500">{stats.cards.ingredients.lowStock} low stock</span></>
++                        ) : (
++                            <><span className="text-muted-foreground">All stocked up</span></>
++                        )
++                    }
+                     icon={Archive}
+                 />
+                 <StatCard
+                     title="Orders Today"
+-                    value="47"
+-                    subtext={<><span className="text-green-500">+12%</span> vs yesterday</>}
++                    value={stats.cards.orders.today.toString()}
++                    subtext={
++                        <>
++                            <span className={stats.cards.orders.growth >= 0 ? "text-green-500" : "text-red-500"}>
++                                {stats.cards.orders.growth >= 0 ? '+' : ''}{stats.cards.orders.growth}%
++                            </span> vs yesterday
++                        </>
++                    }
+                     icon={ClipboardList}
+                 />
+                 <StatCard
+                     title="Today's Revenue"
+-                    value={`${currency}2,341`}
+-                    subtext={<><span className="text-green-500">+8.4%</span> vs yesterday</>}
++                    value={`${currency}${stats.cards.revenue.today.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
++                    subtext={
++                        <>
++                            <span className={stats.cards.revenue.growth >= 0 ? "text-green-500" : "text-red-500"}>
++                                {stats.cards.revenue.growth >= 0 ? '+' : ''}{stats.cards.revenue.growth}%
++                            </span> vs yesterday
++                        </>
++                    }
+                     icon={CircleDollarSign}
+                 />
+             </div>
+ 
+             <div className="grid grid-cols-1 xl:grid-cols-[1fr_380px] gap-5">
+-                <RecentOrders />
+-                <LowStockAlerts />
++                <RecentOrders
++                    orders={stats.recentOrders}
++                    onViewAll={() => navigate('/operations/orders')}
++                    timeFilter={timeFilter}
++                    onTimeFilterChange={setTimeFilter}
++                />
++                <LowStockAlerts
++                    alerts={stats.lowStockAlerts}
++                    onManage={() => navigate('/management/ingredients?filter=alerts')}
++                />
+             </div>
+         </div>
+     );
+diff --git a/frontend/src/components/dashboard/LowStockAlerts.tsx b/frontend/src/components/dashboard/LowStockAlerts.tsx
+index d4adabc..cd7ff53 100644
+--- a/frontend/src/components/dashboard/LowStockAlerts.tsx
++++ b/frontend/src/components/dashboard/LowStockAlerts.tsx
+@@ -29,7 +29,7 @@ export function LowStockAlerts({ alerts = defaultAlerts, onManage }: LowStockAle
+             <CardHeader className="flex flex-row items-center justify-between p-[18px] px-[22px] border-b space-y-0">
+                 <CardTitle className="text-base font-semibold font-serif flex items-center gap-[6px] leading-none text-foreground">
+                     <AlertTriangle className="w-[18px] h-[18px] text-amber-500" />
+-                    ÔÜá Low Stock Alerts
++                    Low Stock Alerts
+                 </CardTitle>
+                 <Button variant="secondary" size="sm" className="h-7 text-xs px-2.5" onClick={onManage}>
+                     Manage
+@@ -37,18 +37,22 @@ export function LowStockAlerts({ alerts = defaultAlerts, onManage }: LowStockAle
+             </CardHeader>
+             <CardContent className="p-[20px] px-[22px]">
+                 <div className="flex flex-col gap-[10px]">
+-                    {alerts.map(alert => (
+-                        <div key={alert.id} className="flex items-center gap-[14px] p-[12px] px-[14px] bg-secondary/30 rounded-md border">
+-                            <div className={cn(
+-                                "w-2 h-2 rounded-full shrink-0",
+-                                alert.level === 'critical' ? "bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.8)]" : "bg-amber-500 shadow-[0_0_6px_rgba(245,158,11,0.8)]"
+-                            )} />
+-                            <div className="flex-1 text-[14px] text-foreground">{alert.name}</div>
+-                            <div className="font-mono text-[12px] text-muted-foreground">
+-                                <span className="text-red-500 font-medium">{alert.quantity}</span> / min {alert.min}
++                    {alerts.length === 0 ? (
++                        <div className="py-8 text-center text-sm text-muted-foreground">All items sufficiently stocked.</div>
++                    ) : (
++                        alerts.map(alert => (
++                            <div key={alert.id} className="flex items-center gap-[14px] p-[12px] px-[14px] bg-secondary/30 rounded-md border">
++                                <div className={cn(
++                                    "w-2 h-2 rounded-full shrink-0",
++                                    alert.level === 'critical' ? "bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.8)]" : "bg-amber-500 shadow-[0_0_6px_rgba(245,158,11,0.8)]"
++                                )} />
++                                <div className="flex-1 text-[14px] text-foreground">{alert.name}</div>
++                                <div className="font-mono text-[12px] text-muted-foreground">
++                                    <span className={cn("font-medium", alert.level === 'critical' ? "text-red-500" : "text-amber-500")}>{alert.quantity}</span> / min {alert.min}
++                                </div>
+                             </div>
+-                        </div>
+-                    ))}
++                        ))
++                    )}
+                 </div>
+             </CardContent>
+         </Card>
+diff --git a/frontend/src/components/dashboard/RecentOrders.tsx b/frontend/src/components/dashboard/RecentOrders.tsx
+index b10c160..ebf7da9 100644
+--- a/frontend/src/components/dashboard/RecentOrders.tsx
++++ b/frontend/src/components/dashboard/RecentOrders.tsx
+@@ -1,5 +1,13 @@
+ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+ import { Button } from "@/components/ui/button";
++import { Clock } from 'lucide-react';
++import {
++    Select,
++    SelectContent,
++    SelectItem,
++    SelectTrigger,
++    SelectValue,
++} from '@/components/ui/select';
+ import { cn } from "@/lib/utils";
+ import { useSettingsStore } from "@/store/settingsStore";
+ 
+@@ -7,12 +15,14 @@ export interface DashboardOrder {
+     id: string;
+     itemsConfig: string;
+     amount: number;
+-    status: 'Delivered' | 'Preparing' | 'Pending';
++    status: string;
+ }
+ 
+ interface RecentOrdersProps {
+     orders?: DashboardOrder[];
+     onViewAll?: () => void;
++    timeFilter?: string;
++    onTimeFilterChange?: (val: string) => void;
+ }
+ 
+ const defaultOrders: DashboardOrder[] = [
+@@ -23,7 +33,7 @@ const defaultOrders: DashboardOrder[] = [
+     { id: '#1038', itemsConfig: 'Burger ├ù1, Fries ├ù1', amount: 22.00, status: 'Delivered' },
+ ];
+ 
+-export function RecentOrders({ orders = defaultOrders, onViewAll }: RecentOrdersProps) {
++export function RecentOrders({ orders = defaultOrders, onViewAll, timeFilter, onTimeFilterChange }: RecentOrdersProps) {
+     const { getSettingValue } = useSettingsStore();
+     const currency = getSettingValue('currency_symbol', '$');
+ 
+@@ -31,30 +41,53 @@ export function RecentOrders({ orders = defaultOrders, onViewAll }: RecentOrders
+         <Card className="overflow-hidden">
+             <CardHeader className="flex flex-row items-center justify-between p-[18px] px-[22px] border-b space-y-0">
+                 <CardTitle className="text-base font-semibold font-serif leading-none">Recent Orders</CardTitle>
+-                <Button variant="secondary" size="sm" className="h-7 text-xs px-2.5" onClick={onViewAll}>
+-                    View All
+-                </Button>
++                <div className="flex items-center gap-2">
++                    {onTimeFilterChange && (
++                        <Select value={timeFilter} onValueChange={onTimeFilterChange}>
++                            <SelectTrigger className="h-7 w-[130px] text-xs">
++                                <Clock className="w-3 h-3 mr-1.5 shrink-0" />
++                                <span className="truncate flex-1 text-left"><SelectValue placeholder="Time" /></span>
++                            </SelectTrigger>
++                            <SelectContent>
++                                <SelectItem value="15mins">15 Minutes</SelectItem>
++                                <SelectItem value="30mins">30 Minutes</SelectItem>
++                                <SelectItem value="45mins">45 Minutes</SelectItem>
++                                <SelectItem value="60mins">1 Hour</SelectItem>
++                                <SelectItem value="120mins">2 Hours</SelectItem>
++                                <SelectItem value="Today">Today</SelectItem>
++                            </SelectContent>
++                        </Select>
++                    )}
++                    <Button variant="secondary" size="sm" className="h-7 text-xs px-2.5" onClick={onViewAll}>
++                        View All
++                    </Button>
++                </div>
+             </CardHeader>
+             <CardContent className="p-0 px-[22px]">
+                 <div className="flex flex-col">
+-                    {orders.map((order, i) => (
+-                        <div key={order.id} className={cn(
+-                            "flex items-center gap-[14px] py-[13px] text-[13px]",
+-                            i !== orders.length - 1 && "border-b"
+-                        )}>
+-                            <span className="font-mono text-amber-500 text-xs w-[60px]">{order.id}</span>
+-                            <span className="flex-1 text-foreground">{order.itemsConfig}</span>
+-                            <span className="font-mono text-foreground text-[13px] w-[70px] text-right">{currency}{order.amount.toFixed(2)}</span>
+-                            <span className={cn(
+-                                "text-[10px] font-semibold tracking-[0.5px] px-[8px] py-[3px] rounded-full uppercase",
+-                                order.status === 'Delivered' && "bg-green-500/15 text-green-500",
+-                                order.status === 'Preparing' && "bg-amber-500/15 text-amber-500",
+-                                order.status === 'Pending' && "bg-blue-500/15 text-blue-500"
++                    {orders.length === 0 ? (
++                        <div className="py-8 text-center text-sm text-muted-foreground">No recent orders.</div>
++                    ) : (
++                        orders.map((order, i) => (
++                            <div key={order.id} className={cn(
++                                "flex items-center gap-[14px] py-[13px] text-[13px]",
++                                i !== orders.length - 1 && "border-b"
+                             )}>
+-                                {order.status}
+-                            </span>
+-                        </div>
+-                    ))}
++                                <span className="font-mono text-amber-500 text-xs w-[60px]">{order.id}</span>
++                                <span className="flex-1 text-foreground">{order.itemsConfig}</span>
++                                <span className="font-mono text-foreground text-[13px] w-[70px] text-right">{currency}{order.amount.toFixed(2)}</span>
++                                <span className={cn(
++                                    "text-[10px] font-semibold tracking-[0.5px] px-[8px] py-[3px] rounded-full uppercase",
++                                    (order.status === 'Delivered' || order.status === 'Completed') ? "bg-green-500/15 text-green-500" :
++                                        (order.status === 'Preparing' || order.status === 'Ready') ? "bg-amber-500/15 text-amber-500" :
++                                            (order.status === 'Cancelled') ? "bg-destructive/15 text-destructive" :
++                                                "bg-blue-500/15 text-blue-500"
++                                )}>
++                                    {order.status}
++                                </span>
++                            </div>
++                        ))
++                    )}
+                 </div>
+             </CardContent>
+         </Card>
+diff --git a/frontend/src/components/inventory/ingredients/IngredientsView.tsx b/frontend/src/components/inventory/ingredients/IngredientsView.tsx
+index aa0002e..566ae78 100644
+--- a/frontend/src/components/inventory/ingredients/IngredientsView.tsx
++++ b/frontend/src/components/inventory/ingredients/IngredientsView.tsx
+@@ -1,4 +1,5 @@
+ import { useState, useEffect } from 'react';
++import { useSearchParams } from 'react-router-dom';
+ import { Plus, Edit2, Trash2, List } from 'lucide-react';
+ import { PageHeader } from '../shared/PageHeader';
+ import { TableToolbar } from '../shared/TableToolbar';
+@@ -12,8 +13,16 @@ import { useInventoryStore } from '@/store/inventoryStore';
+ 
+ export function IngredientsView() {
+     const { ingredients, isLoading, fetchIngredients } = useInventoryStore();
+-    const [search, setSearch] = useState('');
+-    const [filterStatus, setFilterStatus] = useState('all');
++    const [searchParams, setSearchParams] = useSearchParams();
++    const [search, setSearch] = useState(searchParams.get('search') || '');
++    const [filterStatus, setFilterStatus] = useState(searchParams.get('filter') || 'all');
++
++    useEffect(() => {
++        const params = new URLSearchParams();
++        if (search) params.set('search', search);
++        if (filterStatus && filterStatus !== 'all') params.set('filter', filterStatus);
++        setSearchParams(params, { replace: true });
++    }, [search, filterStatus, setSearchParams]);
+ 
+     const [isAddOpen, setIsAddOpen] = useState(false);
+     const [isStockInOpen, setIsStockInOpen] = useState(false);
+@@ -100,7 +109,9 @@ export function IngredientsView() {
+ 
+     const filtered = ingredients.filter(i => {
+         const matchesSearch = i.name.toLowerCase().includes(search.toLowerCase());
+-        const matchesFilter = filterStatus === 'all' || i.status === filterStatus;
++        const matchesFilter = filterStatus === 'all'
++            || i.status === filterStatus
++            || (filterStatus === 'alerts' && (i.status === 'low' || i.status === 'warn'));
+         return matchesSearch && matchesFilter;
+     });
+ 
+@@ -123,6 +134,7 @@ export function IngredientsView() {
+                 onFilterChange={setFilterStatus}
+                 filterOptions={[
+                     { value: 'all', label: 'All Status' },
++                    { value: 'alerts', label: 'Alerts' },
+                     { value: 'good', label: 'In Stock' },
+                     { value: 'warn', label: 'Low Stock' },
+                     { value: 'low', label: 'Critical' }
+diff --git a/frontend/src/components/inventory/shared/TableToolbar.tsx b/frontend/src/components/inventory/shared/TableToolbar.tsx
+index a879a3b..bdc491e 100644
+--- a/frontend/src/components/inventory/shared/TableToolbar.tsx
++++ b/frontend/src/components/inventory/shared/TableToolbar.tsx
+@@ -36,8 +36,8 @@ export function TableToolbar({
+             />
+             {filterOptions && onFilterChange && (
+                 <Select value={filterValue} onValueChange={onFilterChange}>
+-                    <SelectTrigger className="w-[160px] h-[38px] bg-card">
+-                        <SelectValue placeholder={filterPlaceholder} />
++                    <SelectTrigger className="w-[180px] h-[38px] bg-card">
++                        <span className="truncate flex-1 text-left"><SelectValue placeholder={filterPlaceholder} /></span>
+                     </SelectTrigger>
+                     <SelectContent>
+                         {filterOptions.map(opt => (
+diff --git a/frontend/src/pages/operations/OrdersPage.tsx b/frontend/src/pages/operations/OrdersPage.tsx
+index d84aa97..d01383a 100644
+--- a/frontend/src/pages/operations/OrdersPage.tsx
++++ b/frontend/src/pages/operations/OrdersPage.tsx
+@@ -173,9 +173,9 @@ export default function OrdersPage() {
+                 </div>
+                 <div className="flex flex-col sm:flex-row gap-2">
+                     <Select value={timeFilter} onValueChange={(val) => setTimeFilter(val as TimeFilter)}>
+-                        <SelectTrigger className="w-full sm:w-[130px]">
+-                            <Clock className="w-4 h-4 mr-2" />
+-                            <SelectValue placeholder="Time filter" />
++                        <SelectTrigger className="w-full sm:w-[150px]">
++                            <Clock className="w-4 h-4 mr-2 shrink-0" />
++                            <span className="truncate flex-1 text-left"><SelectValue placeholder="Time filter" /></span>
+                         </SelectTrigger>
+                         <SelectContent>
+                             <SelectItem value="15mins">15 Minutes</SelectItem>
+@@ -259,8 +259,8 @@ export default function OrdersPage() {
+                                             onValueChange={(val) => handleStatusChange(order.id, val)}
+                                             disabled={updatingId === order.id}
+                                         >
+-                                            <SelectTrigger className="h-8 w-32 text-xs border-destructive/30">
+-                                                <SelectValue />
++                                            <SelectTrigger className="h-8 w-[140px] text-xs border-destructive/30">
++                                                <span className="truncate flex-1 text-left"><SelectValue /></span>
+                                             </SelectTrigger>
+                                             <SelectContent>
+                                                 <SelectItem value="pending">Pending</SelectItem>
+@@ -330,8 +330,8 @@ export default function OrdersPage() {
+                                             onValueChange={(val) => handleStatusChange(order.id, val)}
+                                             disabled={updatingId === order.id || order.status === 'delivered' || order.status === 'cancelled'}
+                                         >
+-                                            <SelectTrigger className="h-8 w-32 text-xs">
+-                                                <SelectValue />
++                                            <SelectTrigger className="h-8 w-[140px] text-xs">
++                                                <span className="truncate flex-1 text-left"><SelectValue /></span>
+                                             </SelectTrigger>
+                                             <SelectContent>
+                                                 <SelectItem value="pending">Pending</SelectItem>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Plus, Edit2, Trash2, List } from 'lucide-react';
 import { PageHeader } from '../shared/PageHeader';
 import { TableToolbar } from '../shared/TableToolbar';
@@ -12,8 +13,16 @@ import { useInventoryStore } from '@/store/inventoryStore';
 
 export function IngredientsView() {
     const { ingredients, isLoading, fetchIngredients } = useInventoryStore();
-    const [search, setSearch] = useState('');
-    const [filterStatus, setFilterStatus] = useState('all');
+    const [searchParams, setSearchParams] = useSearchParams();
+    const [search, setSearch] = useState(searchParams.get('search') || '');
+    const [filterStatus, setFilterStatus] = useState(searchParams.get('filter') || 'all');
+
+    useEffect(() => {
+        const params = new URLSearchParams();
+        if (search) params.set('search', search);
+        if (filterStatus && filterStatus !== 'all') params.set('filter', filterStatus);
+        setSearchParams(params, { replace: true });
+    }, [search, filterStatus, setSearchParams]);
 
     const [isAddOpen, setIsAddOpen] = useState(false);
     const [isStockInOpen, setIsStockInOpen] = useState(false);
@@ -100,7 +109,9 @@ export function IngredientsView() {
 
     const filtered = ingredients.filter(i => {
         const matchesSearch = i.name.toLowerCase().includes(search.toLowerCase());
-        const matchesFilter = filterStatus === 'all' || i.status === filterStatus;
+        const matchesFilter = filterStatus === 'all'
+            || i.status === filterStatus
+            || (filterStatus === 'alerts' && (i.status === 'low' || i.status === 'warn'));
         return matchesSearch && matchesFilter;
     });
 
@@ -123,6 +134,7 @@ export function IngredientsView() {
                 onFilterChange={setFilterStatus}
                 filterOptions={[
                     { value: 'all', label: 'All Status' },
+                    { value: 'alerts', label: 'Alerts' },
                     { value: 'good', label: 'In Stock' },
                     { value: 'warn', label: 'Low Stock' },
                     { value: 'low', label: 'Critical' }

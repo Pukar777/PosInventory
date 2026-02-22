@@ -173,9 +173,9 @@ export default function OrdersPage() {
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2">
                     <Select value={timeFilter} onValueChange={(val) => setTimeFilter(val as TimeFilter)}>
-                        <SelectTrigger className="w-full sm:w-[130px]">
-                            <Clock className="w-4 h-4 mr-2" />
-                            <SelectValue placeholder="Time filter" />
+                        <SelectTrigger className="w-full sm:w-[150px]">
+                            <Clock className="w-4 h-4 mr-2 shrink-0" />
+                            <span className="truncate flex-1 text-left"><SelectValue placeholder="Time filter" /></span>
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="15mins">15 Minutes</SelectItem>
@@ -259,8 +259,8 @@ export default function OrdersPage() {
                                             onValueChange={(val) => handleStatusChange(order.id, val)}
                                             disabled={updatingId === order.id}
                                         >
-                                            <SelectTrigger className="h-8 w-32 text-xs border-destructive/30">
-                                                <SelectValue />
+                                            <SelectTrigger className="h-8 w-[140px] text-xs border-destructive/30">
+                                                <span className="truncate flex-1 text-left"><SelectValue /></span>
                                             </SelectTrigger>
                                             <SelectContent>
                                                 <SelectItem value="pending">Pending</SelectItem>
@@ -330,8 +330,8 @@ export default function OrdersPage() {
                                             onValueChange={(val) => handleStatusChange(order.id, val)}
                                             disabled={updatingId === order.id || order.status === 'delivered' || order.status === 'cancelled'}
                                         >
-                                            <SelectTrigger className="h-8 w-32 text-xs">
-                                                <SelectValue />
+                                            <SelectTrigger className="h-8 w-[140px] text-xs">
+                                                <span className="truncate flex-1 text-left"><SelectValue /></span>
                                             </SelectTrigger>
                                             <SelectContent>
                                                 <SelectItem value="pending">Pending</SelectItem>
