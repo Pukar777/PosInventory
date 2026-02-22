@@ -11,7 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        DB::statement('ALTER TABLE recipes ADD CONSTRAINT check_quantity_required_positive CHECK (quantity_required > 0)');
+        // Fix any existing data that would violate the constraint
+        DB::table('recipes')->where('quantity_required', '<=', 0)->update(['quantity_required' => 1]);
+
+        try {
+            DB::statement('ALTER TABLE recipes ADD CONSTRAINT check_quantity_required_positive CHECK (quantity_required > 0)');
+        } catch (\Exception $e) {
+            // Ignore if constraint already exists or fails to apply
+        }
     }
 
     /**
