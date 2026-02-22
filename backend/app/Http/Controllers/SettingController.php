@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Setting;
 use App\Services\ApiResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Exception;
 
@@ -44,6 +45,9 @@ class SettingController extends Controller
                 $setting->save();
                 $updatedSettings[] = $setting;
             }
+
+            // Clear the settings cache so it is reloaded on next request
+            Cache::forget('app_settings');
 
             DB::commit();
 

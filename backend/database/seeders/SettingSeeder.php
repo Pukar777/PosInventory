@@ -51,6 +51,20 @@ class SettingSeeder extends Seeder
             ]
         );
 
+        Setting::updateOrCreate(
+            ['key' => 'stock_deduction_timing'],
+            [
+                'label' => 'Stock Deduction Timing',
+                'value' => 'delivered',
+                'type' => 'select',
+                'options' => [
+                    ['value' => 'delivered', 'label' => 'When Order is Delivered (Default)'],
+                    ['value' => 'placed', 'label' => 'When Order is Placed'],
+                ],
+                'parent_id' => $generalGroup->id,
+            ]
+        );
+
         $restaurantGroup = Setting::updateOrCreate(
             ['key' => 'restaurant_details'],
             [

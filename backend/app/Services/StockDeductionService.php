@@ -78,4 +78,14 @@ class StockDeductionService
             }
         });
     }
+
+    /**
+     * Check if stock has already been deducted for this order.
+     */
+    public function hasDeducted(Order $order): bool
+    {
+        return StockMovement::where('order_id', $order->id)
+            ->where('type', 'deduction')
+            ->exists();
+    }
 }
