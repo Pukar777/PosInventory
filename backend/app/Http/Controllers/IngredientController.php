@@ -10,7 +10,7 @@ class IngredientController extends Controller
 {
     public function index()
     {
-        return ApiResponse::success(Ingredient::all(), 'Ingredients retrieved successfully.');
+        return ApiResponse::success(Ingredient::with('menuItems')->get(), 'Ingredients retrieved successfully.');
     }
 
     public function store(Request $request)
@@ -27,7 +27,7 @@ class IngredientController extends Controller
 
     public function show(Ingredient $ingredient)
     {
-        return ApiResponse::success($ingredient, 'Ingredient retrieved successfully.');
+        return ApiResponse::success($ingredient->load('menuItems'), 'Ingredient retrieved successfully.');
     }
 
     public function update(Request $request, Ingredient $ingredient)
