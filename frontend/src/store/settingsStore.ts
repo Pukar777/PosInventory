@@ -8,6 +8,7 @@ interface Setting {
     label: string;
     value: string | null;
     type: string;
+    options?: { label: string; value: string }[];
     children?: Setting[];
 }
 

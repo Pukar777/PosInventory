@@ -12,6 +12,11 @@ class Setting extends Model
         'label',
         'value',
         'type',
+        'options',
+    ];
+
+    protected $casts = [
+        'options' => 'array',
     ];
 
     public function parent()

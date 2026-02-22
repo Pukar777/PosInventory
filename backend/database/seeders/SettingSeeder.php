@@ -13,36 +13,62 @@ class SettingSeeder extends Seeder
      */
     public function run(): void
     {
-        $generalGroup = Setting::create([
-            'key' => 'general',
-            'label' => 'General Settings',
-            'value' => null,
-            'type' => 'group',
-            'parent_id' => null,
-        ]);
+        $generalGroup = Setting::updateOrCreate(
+            ['key' => 'general'],
+            [
+                'label' => 'General Settings',
+                'value' => null,
+                'type' => 'group',
+                'parent_id' => null,
+            ]
+        );
 
-        Setting::create([
-            'key' => 'currency_symbol',
-            'label' => 'Currency Symbol',
-            'value' => 'Rs. ',
-            'type' => 'string',
-            'parent_id' => $generalGroup->id,
-        ]);
+        Setting::updateOrCreate(
+            ['key' => 'currency_symbol'],
+            [
+                'label' => 'Currency Symbol',
+                'value' => 'Rs. ',
+                'type' => 'string',
+                'parent_id' => $generalGroup->id,
+            ]
+        );
 
-        $restaurantGroup = Setting::create([
-            'key' => 'restaurant_details',
-            'label' => 'Restaurant Details',
-            'value' => null,
-            'type' => 'group',
-            'parent_id' => null,
-        ]);
+        Setting::updateOrCreate(
+            ['key' => 'default_time_filter'],
+            [
+                'label' => 'Default Time Filter',
+                'value' => '30mins',
+                'type' => 'select',
+                'options' => [
+                    ['value' => '15mins', 'label' => '15 Minutes'],
+                    ['value' => '30mins', 'label' => '30 Minutes'],
+                    ['value' => '45mins', 'label' => '45 Minutes'],
+                    ['value' => '60mins', 'label' => '1 Hour'],
+                    ['value' => '120mins', 'label' => '2 Hours'],
+                    ['value' => 'Today', 'label' => 'Today'],
+                ],
+                'parent_id' => $generalGroup->id,
+            ]
+        );
 
-        Setting::create([
-            'key' => 'restaurant_name',
-            'label' => 'Restaurant Name',
-            'value' => 'Digital Waiter!',
-            'type' => 'string',
-            'parent_id' => $restaurantGroup->id,
-        ]);
+        $restaurantGroup = Setting::updateOrCreate(
+            ['key' => 'restaurant_details'],
+            [
+                'label' => 'Restaurant Details',
+                'value' => null,
+                'type' => 'group',
+                'parent_id' => null,
+            ]
+        );
+
+        Setting::updateOrCreate(
+            ['key' => 'restaurant_name'],
+            [
+                'label' => 'Restaurant Name',
+                'value' => 'Digital Waiter!',
+                'type' => 'string',
+                'parent_id' => $restaurantGroup->id,
+            ]
+        );
     }
 }
