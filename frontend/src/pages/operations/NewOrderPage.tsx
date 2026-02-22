@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { ChefHat, Search, Plus, Minus, Trash2, UtensilsCrossed, X } from 'lucide-react'
+import { ChefHat, Search, Plus, Minus, Trash2, UtensilsCrossed, X, CheckCircle2, XCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -22,6 +22,12 @@ interface MenuItem {
     image: string | null
     is_available: boolean
     category: { id: number; name: string }
+    ingredients?: {
+        id: number;
+        name: string;
+        current_stock: number;
+        pivot: { quantity_required: number };
+    }[];
 }
 
 interface Category {
@@ -87,8 +93,9 @@ export default function NewOrderPage() {
             toast.success('Order placed successfully!')
             clearCart()
             fetchData() // to refresh tables status
-        } catch (error) {
-            toast.error('Failed to place order.')
+        } catch (error: any) {
+            const errorMessage = error.response?.data?.message || 'Failed to place order.'
+            toast.error(errorMessage)
             console.error(error)
         } finally {
             setIsSubmitting(false)
@@ -194,6 +201,11 @@ export default function NewOrderPage() {
 
     // ─── Menu Item Card (extracted to avoid re-defining inline) ─────────────
     const MenuCard = ({ item }: { item: MenuItem }) => {
+        const hasIngredients = item.ingredients && item.ingredients.length > 0;
+        const isAvailable = hasIngredients
+            ? item.ingredients!.every(ing => Number(ing.current_stock) >= Number(ing.pivot.quantity_required))
+            : true;
+
         return (
             <div
                 onClick={() => addItem({ menu_item_id: item.id, name: item.name, price: Number(item.price), image: item.image })}
@@ -209,7 +221,18 @@ export default function NewOrderPage() {
                     )}
                 </div>
                 <div className="p-3">
-                    <p className="font-semibold text-sm leading-tight line-clamp-2">{item.name}</p>
+                    <div className="flex items-start justify-between gap-2">
+                        <p className="font-semibold text-sm leading-tight line-clamp-2">{item.name}</p>
+                        {hasIngredients && (
+                            <div title={isAvailable ? "Ingredients available" : "Ingredients missing"} className="shrink-0 mt-0.5">
+                                {isAvailable ? (
+                                    <CheckCircle2 className="w-4 h-4 text-green-500" />
+                                ) : (
+                                    <XCircle className="w-4 h-4 text-red-500" />
+                                )}
+                            </div>
+                        )}
+                    </div>
                     <p className="text-primary font-bold mt-1">{currency}{Number(item.price).toFixed(2)}</p>
                 </div>
             </div>
