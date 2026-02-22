@@ -55,7 +55,7 @@ export default function LoginPage() {
                 <CardHeader className="space-y-4 pt-8">
                     <div className="flex justify-center mb-2">
                         <span
-                            className="text-7xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-amber-200 drop-shadow-md pb-4 pt-1 px-2"
+                            className="text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-amber-200 drop-shadow-md pb-4 pt-1 px-2"
                             style={{ fontFamily: "'Dancing Script', 'Pacifico', cursive" }}
                         >
                             {import.meta.env.VITE_APP_NAME || 'Digital Waiter!'}
