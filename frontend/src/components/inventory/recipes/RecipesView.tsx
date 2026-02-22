@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Pencil } from 'lucide-react';
 import { PageHeader } from '../shared/PageHeader';
+import { TableToolbar } from '../shared/TableToolbar';
 import { DataTableCard, DataTableHeader, DataTableHead, DataTableRow, DataTableCell, Table, TableBody } from '../shared/DataTable';
 import { ImageThumb } from '../shared/StatusBadge';
 import { Button } from '@/components/ui/button';
@@ -11,20 +12,29 @@ import { toast } from 'sonner';
 export function RecipesView() {
     const { request } = useApi();
     const [recipes, setRecipes] = useState<RecipeMenuItem[]>([]);
+    const [categories, setCategories] = useState<{ id: number, name: string }[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isManageOpen, setIsManageOpen] = useState(false);
     const [selectedRecipe, setSelectedRecipe] = useState<RecipeMenuItem | null>(null);
+    const [search, setSearch] = useState('');
+    const [filterCat, setFilterCat] = useState('all');
 
     const fetchRecipes = async () => {
         setIsLoading(true);
         try {
-            const response = await request({ url: '/recipes', method: 'GET' });
-            if (response.data.success) {
-                setRecipes(response.data.data);
+            const [recipesRes, catsRes] = await Promise.all([
+                request({ url: '/recipes', method: 'GET' }),
+                request({ url: '/categories', method: 'GET' })
+            ]);
+            if (recipesRes.data.success) {
+                setRecipes(recipesRes.data.data);
+            }
+            if (catsRes.data.success) {
+                setCategories(catsRes.data.data.map((c: any) => ({ id: c.id, name: c.name })));
             }
         } catch (error) {
-            console.error('Error fetching recipes:', error);
-            toast.error('Failed to fetch recipes');
+            console.error('Error fetching data:', error);
+            toast.error('Failed to fetch recipes or categories');
         } finally {
             setIsLoading(false);
         }
@@ -56,6 +66,19 @@ export function RecipesView() {
         }
     };
 
+    const filteredRecipes = useMemo(() => {
+        return recipes.filter(r => {
+            const matchesSearch = r.name.toLowerCase().includes(search.toLowerCase());
+            const matchesCat = filterCat === 'all' || r.category_id?.toString() === filterCat;
+            return matchesSearch && matchesCat;
+        });
+    }, [recipes, search, filterCat]);
+
+    const filterOptions = [
+        { value: 'all', label: 'All Categories' },
+        ...categories.map(c => ({ value: c.id.toString(), label: c.name }))
+    ];
+
     return (
         <div className="animate-in fade-in space-y-4">
             <PageHeader
@@ -63,6 +86,15 @@ export function RecipesView() {
                 actionLabel="Manage Recipe"
                 onAction={() => { setSelectedRecipe(null); setIsManageOpen(true); }}
                 icon={<Pencil className="w-4 h-4" />}
+            />
+
+            <TableToolbar
+                searchQuery={search}
+                onSearchChange={setSearch}
+                searchPlaceholder="Search recipes..."
+                filterValue={filterCat}
+                onFilterChange={setFilterCat}
+                filterOptions={filterOptions}
             />
 
             <DataTableCard>
@@ -78,12 +110,12 @@ export function RecipesView() {
                             <DataTableRow>
                                 <DataTableCell colSpan={4} className="text-center text-muted-foreground italic py-10">Loading recipes...</DataTableCell>
                             </DataTableRow>
-                        ) : recipes.length === 0 ? (
+                        ) : filteredRecipes.length === 0 ? (
                             <DataTableRow>
-                                <DataTableCell colSpan={4} className="text-center text-muted-foreground italic py-10">No menu items found</DataTableCell>
+                                <DataTableCell colSpan={4} className="text-center text-muted-foreground italic py-10">No recipes found.</DataTableCell>
                             </DataTableRow>
                         ) : (
-                            recipes.map((r) => {
+                            filteredRecipes.map((r) => {
                                 const hasIngredients = r.ingredients && r.ingredients.length > 0;
                                 const ingredientsText = hasIngredients
                                     ? (r.ingredients || []).map(i => `${i.name} (${Number(i.pivot?.quantity_required || 0).toString()} ${i.unit || 'unit'})`).join(', ')
