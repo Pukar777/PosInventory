@@ -36,8 +36,8 @@ export function TableToolbar({
             />
             {filterOptions && onFilterChange && (
                 <Select value={filterValue} onValueChange={onFilterChange}>
-                    <SelectTrigger className="w-[160px] h-[38px] bg-card">
-                        <SelectValue placeholder={filterPlaceholder} />
+                    <SelectTrigger className="w-[180px] h-[38px] bg-card">
+                        <span className="truncate flex-1 text-left"><SelectValue placeholder={filterPlaceholder} /></span>
                     </SelectTrigger>
                     <SelectContent>
                         {filterOptions.map(opt => (

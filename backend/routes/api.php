@@ -18,6 +18,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // --- Admin-only routes ---
     Route::middleware('role:admin')->group(function () {
+        Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'index']);
         Route::get('/settings', [\App\Http\Controllers\SettingController::class, 'index']);
         Route::post('/settings', [\App\Http\Controllers\SettingController::class, 'update']);
         Route::apiResource('categories', CategoryController::class);
