@@ -2,6 +2,7 @@ import { Menu, Search, Bell, Settings, Plus } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { GlobalAlerts } from './GlobalAlerts';
 
 interface TopbarProps {
     setIsMobileMenuOpen: (open: boolean) => void;
@@ -43,6 +44,7 @@ export function Topbar({ setIsMobileMenuOpen, onOpenSettings }: TopbarProps) {
             </div>
 
             <div className="flex items-center gap-4">
+                <GlobalAlerts />
                 <Button
                     onClick={() => navigate('/operations/new-order')}
                     className="h-9 gap-2 shrink-0 bg-primary/90 hover:bg-primary"
