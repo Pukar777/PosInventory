@@ -1,5 +1,5 @@
-import { Menu, Search, Bell, Settings } from 'lucide-react';
-import { useLocation } from 'react-router-dom';
+import { Menu, Search, Bell, Settings, Plus } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
@@ -10,6 +10,7 @@ interface TopbarProps {
 
 export function Topbar({ setIsMobileMenuOpen, onOpenSettings }: TopbarProps) {
     const location = useLocation();
+    const navigate = useNavigate();
 
     const getPageTitle = () => {
         const path = location.pathname;
@@ -42,6 +43,14 @@ export function Topbar({ setIsMobileMenuOpen, onOpenSettings }: TopbarProps) {
             </div>
 
             <div className="flex items-center gap-4">
+                <Button
+                    onClick={() => navigate('/operations/new-order')}
+                    className="h-9 gap-2 shrink-0 bg-primary/90 hover:bg-primary"
+                    size="sm"
+                >
+                    <Plus className="h-4 w-4" />
+                    <span className="hidden sm:inline">New Order</span>
+                </Button>
                 <div className="relative hidden sm:block">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input

@@ -5,12 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\RestaurantTable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use App\Services\ApiResponse;
 
 class TableController extends Controller
 {
     public function index()
     {
-        return response()->json(RestaurantTable::orderBy('number')->get());
+        $tables = RestaurantTable::orderBy('number')->get();
+        return ApiResponse::success($tables, 'Tables retrieved successfully');
     }
 
     public function store(Request $request)
@@ -25,12 +27,12 @@ class TableController extends Controller
             'qr_token' => Str::uuid(),
         ]);
 
-        return response()->json($table, 201);
+        return ApiResponse::success($table, 'Table created successfully', 201);
     }
 
     public function destroy(RestaurantTable $table)
     {
         $table->delete();
-        return response()->json(['message' => 'Table deleted.']);
+        return ApiResponse::success(null, 'Table deleted successfully', 200);
     }
 }
