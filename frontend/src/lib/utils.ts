@@ -10,5 +10,5 @@ export function getStorageUrl(path: string) {
     if (path.startsWith('http')) return path;
     // Remove leading slash if present to avoid double slashes
     const cleanPath = path.startsWith('/') ? path.substring(1) : path;
-    return `http://${window.location.hostname}:8000/storage/${cleanPath}`;
+    return `${import.meta.env.VITE_API_BASE_URL}/storage/${cleanPath}`;
 }

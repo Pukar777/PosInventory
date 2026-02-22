@@ -28,7 +28,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
         set({ isLoading: true });
         try {
             const token = localStorage.getItem('token');
-            const baseURL = `http://${window.location.hostname}:8000/api`;
+            const baseURL = `${import.meta.env.VITE_API_BASE_URL}/api`;
             const response = await axios.get(`${baseURL}/settings`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -45,7 +45,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     updateSettings: async (updates) => {
         try {
             const token = localStorage.getItem('token');
-            const baseURL = `http://${window.location.hostname}:8000/api`;
+            const baseURL = `${import.meta.env.VITE_API_BASE_URL}/api`;
             const response = await axios.post(`${baseURL}/settings`, { settings: updates }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
