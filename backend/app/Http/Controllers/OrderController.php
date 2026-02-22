@@ -118,13 +118,15 @@ class OrderController extends Controller
             return $order;
         });
 
-        // Deduct stock (outside the order transaction so order is committed first)
-        try {
-            $this->stockService->deduct($order);
-        } catch (\RuntimeException $e) {
-            // Stock deduction failed — cancel the order
-            $order->update(['status' => 'cancelled']);
-            return ApiResponse::error($e->getMessage(), 422);
+        // Deduct stock if configured to deduct on placement
+        if (config('settings.stock_deduction_timing', 'delivered') === 'placed') {
+            try {
+                $this->stockService->deduct($order);
+            } catch (\RuntimeException $e) {
+                // Stock deduction failed — cancel the order
+                $order->update(['status' => 'cancelled']);
+                return ApiResponse::error($e->getMessage(), 422);
+            }
         }
 
         // Mark table as occupied
@@ -158,42 +160,54 @@ class OrderController extends Controller
         ]);
 
         $previousStatus = $order->status;
-
         $order->update(['status' => $validated['status']]);
 
-        // Reverse stock if cancelling a non-pending order that was already deducted
+        // If changed to delivered, deduct stock if not already deducted and setting is 'delivered'
+        if ($validated['status'] === 'delivered' && $previousStatus !== 'delivered') {
+            if (config('settings.stock_deduction_timing', 'delivered') === 'delivered') {
+                if (!$this->stockService->hasDeducted($order)) {
+                    try {
+                        $this->stockService->deduct($order);
+                    } catch (\RuntimeException $e) {
+                        \Log::error("Stock deduction failed on delivery for order #{$order->id}: " . $e->getMessage());
+                        // Technically the order is delivered, maybe flag for manual adjustment later
+                    }
+                }
+            }
+        }
+
+        // Reverse stock if cancelling an order that was already deducted
         if ($validated['status'] === 'cancelled' && $previousStatus !== 'cancelled') {
-            try {
-                $this->stockService->reverse($order);
-            } catch (\Exception $e) {
-                // Log but don't block the status update
-                \Log::warning("Stock reversal failed for order #{$order->id}: " . $e->getMessage());
+            if ($this->stockService->hasDeducted($order)) {
+                try {
+                    $this->stockService->reverse($order);
+                } catch (\Exception $e) {
+                    \Log::warning("Stock reversal failed for order #{$order->id}: " . $e->getMessage());
+                }
             }
 
             // Mark table as available if no other active orders
-            $activeOrders = Order::where('table_id', $order->table_id)
-                ->whereNotIn('status', ['delivered', 'cancelled'])
-                ->where('id', '!=', $order->id)
-                ->exists();
-
-            if (!$activeOrders) {
-                RestaurantTable::find($order->table_id)->update(['status' => 'available']);
-            }
+            $this->releaseTableIfNoActiveOrders($order);
         }
 
         // Mark table available when delivered
         if ($validated['status'] === 'delivered') {
-            $activeOrders = Order::where('table_id', $order->table_id)
-                ->whereNotIn('status', ['delivered', 'cancelled'])
-                ->where('id', '!=', $order->id)
-                ->exists();
-
-            if (!$activeOrders) {
-                RestaurantTable::find($order->table_id)->update(['status' => 'available']);
-            }
+            $this->releaseTableIfNoActiveOrders($order);
         }
 
         return response()->json($order->load(['table', 'orderItems.menuItem']));
+    }
+
+    private function releaseTableIfNoActiveOrders(Order $order)
+    {
+        $activeOrders = Order::where('table_id', $order->table_id)
+            ->whereNotIn('status', ['delivered', 'cancelled'])
+            ->where('id', '!=', $order->id)
+            ->exists();
+
+        if (!$activeOrders) {
+            RestaurantTable::find($order->table_id)->update(['status' => 'available']);
+        }
     }
 
     /**
