@@ -4,6 +4,13 @@ import { useSettingsStore } from '@/store/settingsStore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import {
     Sheet,
     SheetContent,
     SheetDescription,
@@ -76,6 +83,29 @@ export function SettingsSidebar({
                         type={setting.type === 'number' ? 'number' : 'text'}
                         className="bg-accent/50 border-border/50 focus-visible:ring-primary/30 h-9"
                     />
+                </div>
+            );
+        }
+
+        if (setting.type === 'select') {
+            return (
+                <div key={setting.id} className="flex flex-col gap-2">
+                    <label className="text-sm font-medium text-muted-foreground">{setting.label}</label>
+                    <Select
+                        value={localValues[setting.id] ?? ''}
+                        onValueChange={(val) => handleChange(setting.id, val)}
+                    >
+                        <SelectTrigger className="bg-accent/50 border-border/50 focus-visible:ring-primary/30 h-9">
+                            <SelectValue placeholder="Select an option" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {setting.options?.map((opt: any, index: number) => (
+                                <SelectItem key={index} value={opt.value}>
+                                    {opt.label}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                 </div>
             );
         }
