@@ -26,6 +26,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::apiResource('menu-items', MenuItemController::class);
         Route::apiResource('recipes', \App\Http\Controllers\RecipeController::class)->only(['index', 'show', 'update']);
         Route::apiResource('tables', TableController::class)->only(['index', 'store', 'destroy']);
+        Route::get('/stock-movements', [\App\Http\Controllers\StockMovementController::class, 'index']);
+        Route::get('/users', [\App\Http\Controllers\UserController::class, 'index']);
     });
 
     // --- Shared routes (admin + waiter) ---
