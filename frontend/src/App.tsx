@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from '@/context/AuthContext'
 import LoginPage from '@/pages/LoginPage'
+import { SpeedInsights } from '@vercel/speed-insights/react'
 import './App.css'
 
 import { useEffect } from 'react';
@@ -66,6 +67,7 @@ function App() {
         <AppContent />
       </Router>
       <Toaster position="top-center" richColors />
+      <SpeedInsights />
     </AuthProvider>
   )
 }
