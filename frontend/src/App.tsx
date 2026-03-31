@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider, useAuth } from '@/context/AuthContext'
 import LoginPage from '@/pages/LoginPage'
 import './App.css'
+import { Analytics } from '@vercel/analytics/react'
 
 import { useEffect } from 'react';
 import { useSettingsStore } from '@/store/settingsStore';
@@ -66,6 +67,7 @@ function App() {
         <AppContent />
       </Router>
       <Toaster position="top-center" richColors />
+      <Analytics />
     </AuthProvider>
   )
 }
